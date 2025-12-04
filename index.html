@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ChronoLog — Eternal Memory</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <script>
+    window.tailwind = {
+      config: {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Space Grotesk"', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'monospace'],
+            },
+            colors: {
+              cyber: {
+                dark: '#050511',
+                glass: 'rgba(20, 20, 40, 0.6)',
+                border: 'rgba(255, 255, 255, 0.08)',
+                primary: '#6366f1',
+                accent: '#8b5cf6'
+              }
+            },
+            animation: {
+              'blob': 'blob 10s infinite',
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+            },
+            keyframes: {
+              blob: {
+                '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                '100%': { transform: 'translate(0px, 0px) scale(1)' },
+              },
+              fadeIn: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
+
+  <style>
+    /* 全局背景设置 */
+    body {
+      background-color: #020205;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.15) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: #e2e8f0;
+    }
+    
+    /* 磨砂玻璃通用类 */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    /* 霓虹按钮 */
+    .btn-neon {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .btn-neon:hover:not(:disabled) {
+      box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+    .btn-neon:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.8);
+    }
+
+    /* 滚动条美化 */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="antialiased min-h-screen relative overflow-x-hidden">
+
+  <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+    <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
+    <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+    <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+  </div>
+
+  <div id="root" class="relative z-10 py-12 px-4 md:px-8"></div>
+
+<script type="text/babel">
+
+/* ---------------------------------------------------------
+   CONFIG & ABI (保持不变)
+   --------------------------------------------------------- */
+const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
+const ARBITRUM_SEPOLIA_CHAIN_ID_DEC = 421614;
+const ARBITRUM_SEPOLIA_CHAIN_ID_HEX = "0x66E16";
+
+const ABI = [
+  { inputs: [{ internalType: "string", name: "_content", type: "string" }, { internalType: "uint256", name: "_unlockTime", type: "uint256" }], name: "createLog", outputs: [], stateMutability: "nonpayable", type: "function" },
+  { inputs: [], name: "getAllLogs", outputs: [{ components: [{ internalType: "uint256", name: "id", type: "uint256" }, { internalType: "address", name: "author", type: "address" }, { internalType: "string", name: "content", type: "string" }, { internalType: "uint256", name: "timestamp", type: "uint256" }, { internalType: "uint256", name: "unlockTime", type: "uint256" }], internalType: "struct ChronoLog.Log[]", name: "", type: "tuple[]" }], stateMutability: "view", type: "function" }
+];
+
+/* ---------------------------------------------------------
+   UTILITIES
+   --------------------------------------------------------- */
+const { useState, useEffect, useMemo } = React;
+const ethers = window.ethers;
+
+function shortAddr(a="") { if(!a) return ""; return a.slice(0,6)+"…"+a.slice(-4); }
+function fmtTsUnixSec(sec){
+  try {
+    const n = Number(sec);
+    if(!n) return "-";
+    return new Date(n*1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  } catch { return "-"; }
+}
+
+// 缓存逻辑
+const LOGS_CACHE_KEY = "chronolog_logs_cache_v3";
+function readLogsCache(){
+  try {
+    const raw = localStorage.getItem(LOGS_CACHE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if((Date.now() - obj.timestamp) > 60000) return null;
+    return obj.data;
+  } catch { return null; }
+}
+function writeLogsCache(data){
+  try { localStorage.setItem(LOGS_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data })); } catch {}
+}
+
+async function createWalletConnectProvider() {
+  const rpc = {}; rpc[ARBITRUM_SEPOLIA_CHAIN_ID_DEC] = "https://sepolia-rollup.arbitrum.io/rpc";
+  if(!window.WalletConnectProvider) throw new Error("WalletConnect lib missing");
+  const WalletConnectProvider = window.WalletConnectProvider.default || window.WalletConnectProvider;
+  return new WalletConnectProvider({ rpc, chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC, qrcode: true });
+}
+
+/* ---------------------------------------------------------
+   COMPONENTS
+   --------------------------------------------------------- */
+function Notice({kind="info", children}) {
+  const styles = {
+    error: "bg-red-500/10 border-red-500/30 text-red-200",
+    success: "bg-green-500/10 border-green-500/30 text-green-200",
+    info: "bg-blue-500/10 border-blue-500/30 text-blue-200"
+  };
+  return (
+    <div className={`px-4 py-3 rounded-xl border backdrop-blur-md mb-6 flex items-center gap-3 animate-fade-in ${styles[kind] || styles.info}`}>
+      <span className="text-lg">{kind === 'error' ? '⚠️' : kind === 'success' ? '🚀' : 'ℹ️'}</span>
+      <span className="font-mono text-sm">{children}</span>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   MAIN APP
+   --------------------------------------------------------- */
+function App(){
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [account, setAccount] = useState(null);
+  const [network, setNetwork] = useState(null);
+  const [contract, setContract] = useState(null);
+  
+  const [activeTab, setActiveTab] = useState("moment");
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState(null);
+  const [error, setError] = useState(null);
+  
+  const [momentContent, setMomentContent] = useState("");
+  const [capsuleContent, setCapsuleContent] = useState("");
+  const [capsuleUnlockAt, setCapsuleUnlockAt] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // 初始化
+  useEffect(()=>{
+    const cached = readLogsCache();
+    if(cached) setLogs(cached);
+  }, []);
+
+  // 自动清理提示
+  useEffect(()=>{
+    if(!notice && !error) return;
+    const t = setTimeout(()=>{ setNotice(null); setError(null); }, 6000);
+    return ()=>clearTimeout(t);
+  }, [notice, error]);
+
+  // Read-only Fallback
+  useEffect(()=>{
+    if(!provider) {
+      const readRpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", { name: "Arbitrum Sepolia", chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC });
+      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, readRpc));
+      setNetwork({ name: "Arbitrum Sepolia", chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC });
+      if(logs.length===0) fetchLogsInternal(new ethers.Contract(CONTRACT_ADDRESS, ABI, readRpc));
+    }
+  }, [provider]);
+
+  // 连接逻辑 (保留 OKX Fix)
+  async function connectInjected() {
+    setError(null); setNotice(null);
+    let targetProvider = null;
+    if (window.okxwallet) { targetProvider = window.okxwallet; } 
+    else if (window.ethereum) { targetProvider = window.ethereum; } 
+    else { setError("No wallet found. Install OKX Wallet."); return; }
+
+    try {
+      setLoading(true);
+      await targetProvider.request({ method: "eth_requestAccounts" });
+      const p = new ethers.BrowserProvider(targetProvider, "any");
+      const s = await p.getSigner();
+      const addr = await s.getAddress();
+      const net = await p.getNetwork();
+      setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
+      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
+      setNotice("Systems Online: " + shortAddr(addr));
+      if(targetProvider.on) targetProvider.on("accountsChanged", () => window.location.reload());
+    } catch (e) { setError("Connection failed: " + e.message); } 
+    finally { setLoading(false); }
+  }
+
+  async function connectWalletConnect() {
+    setError(null); setNotice(null);
+    try {
+      setLoading(true);
+      const wc = await createWalletConnectProvider();
+      await wc.enable();
+      const p = new ethers.BrowserProvider(wc, "any");
+      const s = await p.getSigner();
+      const addr = await s.getAddress();
+      const net = await p.getNetwork();
+      setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
+      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
+      setNotice("Uplink Established: " + shortAddr(addr));
+      wc.on("disconnect", () => window.location.reload());
+    } catch (e) { setError("QR Connection failed."); } 
+    finally { setLoading(false); }
+  }
+
+  async function handleCreate(content, unlockTime) {
+    if(!signer) return setError("Wallet Disconnected.");
+    if(!content.trim()) return setError("Input cannot be void.");
+    if(network.chainId !== BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)) return setError("Network Mismatch. Switch to Arbitrum Sepolia.");
+
+    try {
+      setLoading(true);
+      const tx = await contract.createLog(content, BigInt(unlockTime));
+      setNotice("Broadcasting to Chain...");
+      await tx.wait();
+      setNotice("Memory Etched Successfully. ✅");
+      setMomentContent(""); setCapsuleContent(""); setCapsuleUnlockAt("");
+      fetchLogs(true);
+    } catch (e) { console.error(e); setError("Transmission Error."); } 
+    finally { setLoading(false); }
+  }
+
+  async function fetchLogs(bypass = false) { if(contract) fetchLogsInternal(contract, bypass); }
+  async function fetchLogsInternal(c, bypass) {
+    setRefreshing(true);
+    try {
+      if(!bypass) { const cached = readLogsCache(); if(cached) { setLogs(cached); setRefreshing(false); return; }}
+      const raw = await c.getAllLogs();
+      const formatted = raw.map(r => ({
+        id: Number(r.id), author: r.author, content: r.content, timestamp: Number(r.timestamp), unlockTime: Number(r.unlockTime)
+      })).sort((a,b) => b.id - a.id);
+      setLogs(formatted); writeLogsCache(formatted);
+    } catch (e) { console.error(e); } finally { setRefreshing(false); }
+  }
+
+  const isCorrectNet = network?.chainId === BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC);
+
+  return (
+    <div className="max-w-5xl mx-auto font-sans">
+      
+      {/* HEADER */}
+      <header className="flex flex-col md:flex-row justify-between items-center mb-12 animate-fade-in">
+        <div className="text-center md:text-left">
+          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 mb-2 drop-shadow-lg">
+            ChronoLog
+          </h1>
+          <p className="font-mono text-sm text-cyan-200/60 uppercase tracking-widest">Arbitrum Temporal Storage</p>
+        </div>
+        
+        {account && (
+          <div className="mt-4 md:mt-0 glass-panel px-6 py-2 rounded-full flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+            <span className="font-mono text-sm text-green-300">{shortAddr(account)}</span>
+          </div>
+        )}
+      </header>
+
+      {/* STATUS MSG */}
+      {notice && <Notice kind="success">{notice}</Notice>}
+      {error && <Notice kind="error">{error}</Notice>}
+
+      {/* CONNECT SCREEN */}
+      {!account && (
+        <div className="glass-panel rounded-3xl p-10 text-center max-w-2xl mx-auto animate-fade-in border-t border-white/10">
+          <div className="w-20 h-20 bg-indigo-500/20 rounded-full mx-auto flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
+            <span className="text-4xl">🔗</span>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Initialize Uplink</h2>
+          <p className="text-slate-400 mb-8">Connect your wallet to interact with the Arbitrum timechain.</p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button onClick={connectInjected} className="btn-neon text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3">
+              <span>🔌</span> Inject (OKX/MetaMask)
+            </button>
+            <button onClick={connectWalletConnect} className="glass-panel hover:bg-white/5 text-white font-bold py-4 px-6 rounded-xl border border-white/10 transition flex items-center justify-center gap-3">
+              <span>📱</span> QR Code Scan
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN INTERFACE */}
+      {account && isCorrectNet && (
+        <main className="animate-fade-in">
+          
+          {/* TABS */}
+          <div className="flex justify-center mb-8 gap-4">
+            <button 
+              onClick={() => setActiveTab("moment")}
+              className={`px-8 py-3 rounded-full font-bold transition-all duration-300 ${activeTab === "moment" ? "btn-neon text-white ring-2 ring-indigo-400/30" : "glass-panel text-slate-400 hover:text-white"}`}
+            >
+              ⚡ Moment
+            </button>
+            <button 
+              onClick={() => setActiveTab("capsule")}
+              className={`px-8 py-3 rounded-full font-bold transition-all duration-300 ${activeTab === "capsule" ? "bg-purple-600 shadow-[0_0_15px_#9333ea] text-white border border-purple-400/50" : "glass-panel text-slate-400 hover:text-white"}`}
+            >
+              ⏳ Capsule
+            </button>
+          </div>
+
+          {/* INPUT AREA */}
+          <div className="glass-panel rounded-3xl p-1 mb-12">
+            <div className="bg-black/40 rounded-[1.3rem] p-6 border border-white/5">
+              {activeTab === "moment" ? (
+                <div className="animate-fade-in">
+                  <textarea 
+                    value={momentContent}
+                    onChange={(e) => setMomentContent(e.target.value)}
+                    placeholder="Etch a permanent thought on the blockchain..."
+                    className="w-full bg-transparent text-lg text-slate-200 placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
+                  ></textarea>
+                  <div className="flex justify-between items-center border-t border-white/10 pt-4 mt-2">
+                    <span className="text-xs text-slate-500 font-mono">TYPE: INSTANT LOG</span>
+                    <button 
+                      disabled={loading}
+                      onClick={() => handleCreate(momentContent, 0)}
+                      className="btn-neon px-8 py-2 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+                    >
+                      {loading ? "Etching..." : "ETCH NOW"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="animate-fade-in">
+                  <textarea 
+                    value={capsuleContent}
+                    onChange={(e) => setCapsuleContent(e.target.value)}
+                    placeholder="Message for the future..."
+                    className="w-full bg-transparent text-lg text-slate-200 placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
+                  ></textarea>
+                  <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-4 mt-2 gap-4">
+                    <div className="w-full md:w-auto">
+                      <input 
+                        type="datetime-local" 
+                        value={capsuleUnlockAt}
+                        onChange={(e) => setCapsuleUnlockAt(e.target.value)}
+                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-purple-500 w-full"
+                      />
+                    </div>
+                    <button 
+                      disabled={loading}
+                      onClick={() => {
+                        if(!capsuleUnlockAt) return setError("Set Unlock Date");
+                        const ts = Math.floor(new Date(capsuleUnlockAt).getTime() / 1000);
+                        if(ts <= Date.now()/1000) return setError("Date must be future");
+                        handleCreate(capsuleContent, ts);
+                      }}
+                      className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 px-8 py-2 rounded-lg text-sm font-bold text-white shadow-[0_0_15px_rgba(147,51,234,0.4)] transition disabled:opacity-50"
+                    >
+                      {loading ? "Sealing..." : "SEAL CAPSULE"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* LOGS FEED */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2">
+              <span className="text-cyan-400">❖</span> MEMORY BANK
+            </h2>
+            <button onClick={() => fetchLogs(true)} className="text-xs font-mono text-indigo-300 hover:text-white transition">
+              {refreshing ? "[SYNCING...]" : "[REFRESH DATA]"}
+            </button>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {logs.length === 0 && <div className="col-span-2 text-center py-12 text-slate-600 font-mono">/ NO DATA FOUND /</div>}
+            
+            {logs.map((log) => {
+              const isLocked = log.unlockTime > Date.now() / 1000;
+              return (
+                <article key={log.id} className="glass-panel rounded-2xl p-6 relative group overflow-hidden transition-all duration-300 hover:bg-white/10">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`text-[10px] font-bold tracking-widest px-2 py-1 rounded border ${isLocked ? "bg-amber-500/10 border-amber-500/30 text-amber-300" : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"}`}>
+                      {isLocked ? "🔒 LOCKED" : "⚡ UNLOCKED"}
+                    </div>
+                    <span className="font-mono text-xs text-slate-500">#{log.id}</span>
+                  </div>
+
+                  <div className="mb-6 text-slate-300 font-light leading-relaxed min-h-[3rem]">
+                    {isLocked 
+                      ? <div className="flex flex-col items-center justify-center h-full py-4 text-amber-500/50 font-mono text-xs gap-2">
+                          <span className="text-2xl opacity-50">🚧</span>
+                          <span>ENCRYPTED UNTIL {fmtTsUnixSec(log.unlockTime)}</span>
+                        </div>
+                      : log.content
+                    }
+                  </div>
+
+                  <div className="flex justify-between items-end border-t border-white/5 pt-4">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Author</span>
+                      <span className="font-mono text-xs text-indigo-300">{shortAddr(log.author)}</span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-slate-500">{fmtTsUnixSec(log.timestamp)}</div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </main>
+      )}
+
+      <footer className="mt-20 text-center py-8 border-t border-white/5">
+        <p className="text-slate-600 text-xs font-mono">SECURED BY ARBITRUM SEPOLIA • HACKATHON BUILD 2025</p>
+      </footer>
+
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
