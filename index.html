@@ -2,12 +2,12 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
   <title>ChronoLog — Eternal Memory</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;600;800&display=swap" rel="stylesheet">
 
   <script>
     window.tailwind = {
@@ -21,16 +21,16 @@
             },
             colors: {
               cyber: {
-                dark: '#050511',
-                glass: 'rgba(20, 20, 40, 0.6)',
+                dark: '#030307',
+                glass: 'rgba(255, 255, 255, 0.03)',
                 border: 'rgba(255, 255, 255, 0.08)',
                 primary: '#6366f1',
-                accent: '#8b5cf6'
               }
             },
             animation: {
-              'blob': 'blob 10s infinite',
-              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'blob': 'blob 20s infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'text-shimmer': 'textShimmer 3s linear infinite',
             },
             keyframes: {
               blob: {
@@ -39,9 +39,9 @@
                 '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
                 '100%': { transform: 'translate(0px, 0px) scale(1)' },
               },
-              fadeIn: {
-                '0%': { opacity: '0', transform: 'translateY(10px)' },
-                '100%': { opacity: '1', transform: 'translateY(0)' },
+              textShimmer: {
+                '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
               }
             }
           }
@@ -58,66 +58,63 @@
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
   <style>
-    /* 全局背景设置 */
+    /* 核心修复：强制日期控件使用深色模式 */
+    ::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+    }
+    input[type="datetime-local"] {
+      color-scheme: dark;
+    }
+
+    /* 全局背景 */
     body {
-      background-color: #020205;
+      background-color: #030307;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.15) 0px, transparent 50%);
-      background-attachment: fixed;
+        radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.15), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(37, 99, 235, 0.15), transparent 25%);
       color: #e2e8f0;
+      overflow-x: hidden;
     }
     
-    /* 磨砂玻璃通用类 */
+    /* 高级磨砂玻璃 (Pro) */
     .glass-panel {
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 霓虹流光按钮 */
+    .btn-glow {
+      position: relative;
+      background: linear-gradient(90deg, #4f46e5, #9333ea);
+      background-size: 200% 200%;
+      animation: textShimmer 3s ease infinite;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn-glow:hover {
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
     }
 
-    /* 霓虹按钮 */
-    .btn-neon {
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-      transition: all 0.3s ease;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-    .btn-neon:hover:not(:disabled) {
-      box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
-      transform: translateY(-1px);
-      filter: brightness(1.1);
-    }
-    .btn-neon:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      filter: grayscale(0.8);
-    }
-
-    /* 滚动条美化 */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    /* 修复 iOS 点击高亮 */
+    * { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
-<body class="antialiased min-h-screen relative overflow-x-hidden">
+<body class="antialiased min-h-screen relative">
 
-  <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-    <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
-    <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-    <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+  <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+    <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+    <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-blue-900/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
+    <div class="absolute bottom-[-10%] left-[20%] w-[600px] h-[600px] bg-indigo-900/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
   </div>
 
-  <div id="root" class="relative z-10 py-12 px-4 md:px-8"></div>
+  <div id="root" class="relative z-10 px-4 py-8 md:py-16 max-w-5xl mx-auto"></div>
 
 <script type="text/babel">
 
-/* ---------------------------------------------------------
-   CONFIG & ABI (保持不变)
-   --------------------------------------------------------- */
+/* 配置保持不变 */
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const ARBITRUM_SEPOLIA_CHAIN_ID_DEC = 421614;
 const ARBITRUM_SEPOLIA_CHAIN_ID_HEX = "0x66E16";
@@ -127,63 +124,50 @@ const ABI = [
   { inputs: [], name: "getAllLogs", outputs: [{ components: [{ internalType: "uint256", name: "id", type: "uint256" }, { internalType: "address", name: "author", type: "address" }, { internalType: "string", name: "content", type: "string" }, { internalType: "uint256", name: "timestamp", type: "uint256" }, { internalType: "uint256", name: "unlockTime", type: "uint256" }], internalType: "struct ChronoLog.Log[]", name: "", type: "tuple[]" }], stateMutability: "view", type: "function" }
 ];
 
-/* ---------------------------------------------------------
-   UTILITIES
-   --------------------------------------------------------- */
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect } = React;
 const ethers = window.ethers;
 
 function shortAddr(a="") { if(!a) return ""; return a.slice(0,6)+"…"+a.slice(-4); }
 function fmtTsUnixSec(sec){
   try {
-    const n = Number(sec);
-    if(!n) return "-";
+    const n = Number(sec); if(!n) return "-";
     return new Date(n*1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   } catch { return "-"; }
 }
 
-// 缓存逻辑
-const LOGS_CACHE_KEY = "chronolog_logs_cache_v3";
+/* 缓存逻辑 */
+const LOGS_CACHE_KEY = "chronolog_cache_v4";
 function readLogsCache(){
   try {
-    const raw = localStorage.getItem(LOGS_CACHE_KEY);
-    if(!raw) return null;
-    const obj = JSON.parse(raw);
-    if((Date.now() - obj.timestamp) > 60000) return null;
+    const raw = localStorage.getItem(LOGS_CACHE_KEY); if(!raw) return null;
+    const obj = JSON.parse(raw); if((Date.now()-obj.timestamp)>60000) return null;
     return obj.data;
   } catch { return null; }
 }
-function writeLogsCache(data){
-  try { localStorage.setItem(LOGS_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data })); } catch {}
-}
+function writeLogsCache(data){ try { localStorage.setItem(LOGS_CACHE_KEY, JSON.stringify({timestamp:Date.now(),data})); } catch {} }
 
 async function createWalletConnectProvider() {
   const rpc = {}; rpc[ARBITRUM_SEPOLIA_CHAIN_ID_DEC] = "https://sepolia-rollup.arbitrum.io/rpc";
-  if(!window.WalletConnectProvider) throw new Error("WalletConnect lib missing");
+  if(!window.WalletConnectProvider) throw new Error("WalletConnect missing");
   const WalletConnectProvider = window.WalletConnectProvider.default || window.WalletConnectProvider;
   return new WalletConnectProvider({ rpc, chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC, qrcode: true });
 }
 
-/* ---------------------------------------------------------
-   COMPONENTS
-   --------------------------------------------------------- */
+/* 通知组件 */
 function Notice({kind="info", children}) {
-  const styles = {
-    error: "bg-red-500/10 border-red-500/30 text-red-200",
-    success: "bg-green-500/10 border-green-500/30 text-green-200",
-    info: "bg-blue-500/10 border-blue-500/30 text-blue-200"
+  const colors = {
+    error: "border-red-500/50 bg-red-900/20 text-red-200",
+    success: "border-green-500/50 bg-green-900/20 text-green-200",
+    info: "border-blue-500/50 bg-blue-900/20 text-blue-200"
   };
   return (
-    <div className={`px-4 py-3 rounded-xl border backdrop-blur-md mb-6 flex items-center gap-3 animate-fade-in ${styles[kind] || styles.info}`}>
-      <span className="text-lg">{kind === 'error' ? '⚠️' : kind === 'success' ? '🚀' : 'ℹ️'}</span>
-      <span className="font-mono text-sm">{children}</span>
+    <div className={`p-4 rounded-xl border backdrop-blur-md mb-6 animate-fade-in flex items-start gap-3 shadow-lg ${colors[kind] || colors.info}`}>
+      <span className="text-xl mt-0.5">{kind==='error'?'🚨':kind==='success'?'✨':'ℹ️'}</span>
+      <span className="font-medium text-sm pt-1">{children}</span>
     </div>
   );
 }
 
-/* ---------------------------------------------------------
-   MAIN APP
-   --------------------------------------------------------- */
 function App(){
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
@@ -202,185 +186,184 @@ function App(){
   const [logs, setLogs] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 初始化
-  useEffect(()=>{
-    const cached = readLogsCache();
-    if(cached) setLogs(cached);
-  }, []);
+  useEffect(()=>{ const c=readLogsCache(); if(c) setLogs(c); }, []);
+  useEffect(()=>{ if(notice||error){ const t=setTimeout(()=>{setNotice(null);setError(null)},6000); return ()=>clearTimeout(t);} },[notice,error]);
 
-  // 自动清理提示
-  useEffect(()=>{
-    if(!notice && !error) return;
-    const t = setTimeout(()=>{ setNotice(null); setError(null); }, 6000);
-    return ()=>clearTimeout(t);
-  }, [notice, error]);
-
-  // Read-only Fallback
+  /* Read-only Provider */
   useEffect(()=>{
     if(!provider) {
-      const readRpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", { name: "Arbitrum Sepolia", chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC });
-      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, readRpc));
-      setNetwork({ name: "Arbitrum Sepolia", chainId: ARBITRUM_SEPOLIA_CHAIN_ID_DEC });
-      if(logs.length===0) fetchLogsInternal(new ethers.Contract(CONTRACT_ADDRESS, ABI, readRpc));
+      const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"Arbitrum Sepolia", chainId:ARBITRUM_SEPOLIA_CHAIN_ID_DEC});
+      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc));
+      setNetwork({chainId: BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)});
+      if(logs.length===0) fetchLogsInternal(new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc));
     }
   }, [provider]);
 
-  // 连接逻辑 (保留 OKX Fix)
+  /* Connect Logic */
   async function connectInjected() {
     setError(null); setNotice(null);
-    let targetProvider = null;
-    if (window.okxwallet) { targetProvider = window.okxwallet; } 
-    else if (window.ethereum) { targetProvider = window.ethereum; } 
-    else { setError("No wallet found. Install OKX Wallet."); return; }
-
+    let target = window.okxwallet || window.ethereum;
+    if(!target) return setError("Please install OKX Wallet.");
     try {
-      setLoading(true);
-      await targetProvider.request({ method: "eth_requestAccounts" });
-      const p = new ethers.BrowserProvider(targetProvider, "any");
+      setLoading(true); await target.request({method:"eth_requestAccounts"});
+      const p = new ethers.BrowserProvider(target, "any");
       const s = await p.getSigner();
       const addr = await s.getAddress();
       const net = await p.getNetwork();
       setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
       setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
-      setNotice("Systems Online: " + shortAddr(addr));
-      if(targetProvider.on) targetProvider.on("accountsChanged", () => window.location.reload());
-    } catch (e) { setError("Connection failed: " + e.message); } 
-    finally { setLoading(false); }
+      setNotice("Wallet Connected: " + shortAddr(addr));
+    } catch(e) { setError(e.message); } finally { setLoading(false); }
   }
 
-  async function connectWalletConnect() {
+  async function connectWC() {
     setError(null); setNotice(null);
     try {
-      setLoading(true);
-      const wc = await createWalletConnectProvider();
-      await wc.enable();
+      setLoading(true); const wc = await createWalletConnectProvider(); await wc.enable();
       const p = new ethers.BrowserProvider(wc, "any");
       const s = await p.getSigner();
       const addr = await s.getAddress();
       const net = await p.getNetwork();
       setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
       setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
-      setNotice("Uplink Established: " + shortAddr(addr));
-      wc.on("disconnect", () => window.location.reload());
-    } catch (e) { setError("QR Connection failed."); } 
-    finally { setLoading(false); }
+      setNotice("Mobile Connected: " + shortAddr(addr));
+      wc.on("disconnect", ()=>window.location.reload());
+    } catch(e) { setError("Connection failed"); } finally { setLoading(false); }
   }
 
+  /* Tx Logic */
   async function handleCreate(content, unlockTime) {
-    if(!signer) return setError("Wallet Disconnected.");
-    if(!content.trim()) return setError("Input cannot be void.");
-    if(network.chainId !== BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)) return setError("Network Mismatch. Switch to Arbitrum Sepolia.");
+    if(!signer) return setError("Wallet disconnected");
+    if(!content.trim()) return setError("Please write something");
+    if(network.chainId !== BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)) return setError("Wrong Network! Switch to Arbitrum Sepolia");
 
     try {
       setLoading(true);
       const tx = await contract.createLog(content, BigInt(unlockTime));
-      setNotice("Broadcasting to Chain...");
+      setNotice("Broadcasting to Arbitrum...");
       await tx.wait();
-      setNotice("Memory Etched Successfully. ✅");
+      setNotice("Successfully Etched! 🎉");
       setMomentContent(""); setCapsuleContent(""); setCapsuleUnlockAt("");
       fetchLogs(true);
-    } catch (e) { console.error(e); setError("Transmission Error."); } 
+    } catch(e) { console.error(e); setError("Transaction Failed: " + (e.reason||e.message)); } 
     finally { setLoading(false); }
   }
 
-  async function fetchLogs(bypass = false) { if(contract) fetchLogsInternal(contract, bypass); }
+  async function fetchLogs(bypass) { if(contract) fetchLogsInternal(contract, bypass); }
   async function fetchLogsInternal(c, bypass) {
     setRefreshing(true);
     try {
-      if(!bypass) { const cached = readLogsCache(); if(cached) { setLogs(cached); setRefreshing(false); return; }}
+      if(!bypass) { const cached=readLogsCache(); if(cached){setLogs(cached);setRefreshing(false);return;} }
       const raw = await c.getAllLogs();
-      const formatted = raw.map(r => ({
-        id: Number(r.id), author: r.author, content: r.content, timestamp: Number(r.timestamp), unlockTime: Number(r.unlockTime)
-      })).sort((a,b) => b.id - a.id);
-      setLogs(formatted); writeLogsCache(formatted);
-    } catch (e) { console.error(e); } finally { setRefreshing(false); }
+      const fmt = raw.map(r=>({
+        id:Number(r.id), author:r.author, content:r.content, timestamp:Number(r.timestamp), unlockTime:Number(r.unlockTime)
+      })).sort((a,b)=>b.id-a.id);
+      setLogs(fmt); writeLogsCache(fmt);
+    } catch(e){ console.error(e); } finally { setRefreshing(false); }
   }
 
   const isCorrectNet = network?.chainId === BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC);
 
   return (
-    <div className="max-w-5xl mx-auto font-sans">
+    <div className="font-sans text-slate-200">
       
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-center mb-12 animate-fade-in">
-        <div className="text-center md:text-left">
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 mb-2 drop-shadow-lg">
+      <header className="flex flex-col md:flex-row justify-between items-center mb-10 animate-fade-in">
+        <div className="text-center md:text-left mb-6 md:mb-0">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-text-shimmer pb-2">
             ChronoLog
           </h1>
-          <p className="font-mono text-sm text-cyan-200/60 uppercase tracking-widest">Arbitrum Temporal Storage</p>
+          <p className="font-mono text-xs md:text-sm text-slate-400 tracking-[0.2em] uppercase">Immutable • Eternal • Arbitrum</p>
         </div>
         
-        {account && (
-          <div className="mt-4 md:mt-0 glass-panel px-6 py-2 rounded-full flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></div>
+        {account ? (
+          <div className="glass-panel px-5 py-2 rounded-full flex items-center gap-3 animate-fade-in">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
             <span className="font-mono text-sm text-green-300">{shortAddr(account)}</span>
           </div>
+        ) : (
+          <div className="hidden md:block text-xs text-slate-500 font-mono">NOT CONNECTED</div>
         )}
       </header>
 
-      {/* STATUS MSG */}
+      {/* ALERTS */}
       {notice && <Notice kind="success">{notice}</Notice>}
       {error && <Notice kind="error">{error}</Notice>}
 
-      {/* CONNECT SCREEN */}
+      {/* LOGIN SCREEN */}
       {!account && (
-        <div className="glass-panel rounded-3xl p-10 text-center max-w-2xl mx-auto animate-fade-in border-t border-white/10">
-          <div className="w-20 h-20 bg-indigo-500/20 rounded-full mx-auto flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(99,102,241,0.3)]">
-            <span className="text-4xl">🔗</span>
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Initialize Uplink</h2>
-          <p className="text-slate-400 mb-8">Connect your wallet to interact with the Arbitrum timechain.</p>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button onClick={connectInjected} className="btn-neon text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3">
-              <span>🔌</span> Inject (OKX/MetaMask)
-            </button>
-            <button onClick={connectWalletConnect} className="glass-panel hover:bg-white/5 text-white font-bold py-4 px-6 rounded-xl border border-white/10 transition flex items-center justify-center gap-3">
-              <span>📱</span> QR Code Scan
-            </button>
+        <div className="glass-panel rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto border-t border-white/10 shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
+          <div className="relative z-10">
+            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-2xl mx-auto flex items-center justify-center mb-8 shadow-xl transform rotate-3 group-hover:rotate-6 transition duration-300">
+              <span className="text-4xl">🔗</span>
+            </div>
+            <h2 className="text-3xl font-bold mb-3 text-white">Initialize Link</h2>
+            <p className="text-slate-400 mb-10 max-w-md mx-auto">Connect your wallet to access the Arbitrum Sepolia timeline.</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button onClick={connectInjected} className="btn-glow px-8 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition transform hover:scale-105">
+                <span>💻</span> PC Connect
+              </button>
+              <button onClick={connectWC} className="glass-panel hover:bg-white/10 px-8 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition transform hover:scale-105 border border-white/20">
+                <span>📱</span> Mobile QR
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* MAIN INTERFACE */}
-      {account && isCorrectNet && (
+      {/* DASHBOARD */}
+      {account && (
         <main className="animate-fade-in">
           
           {/* TABS */}
-          <div className="flex justify-center mb-8 gap-4">
-            <button 
-              onClick={() => setActiveTab("moment")}
-              className={`px-8 py-3 rounded-full font-bold transition-all duration-300 ${activeTab === "moment" ? "btn-neon text-white ring-2 ring-indigo-400/30" : "glass-panel text-slate-400 hover:text-white"}`}
-            >
-              ⚡ Moment
-            </button>
-            <button 
-              onClick={() => setActiveTab("capsule")}
-              className={`px-8 py-3 rounded-full font-bold transition-all duration-300 ${activeTab === "capsule" ? "bg-purple-600 shadow-[0_0_15px_#9333ea] text-white border border-purple-400/50" : "glass-panel text-slate-400 hover:text-white"}`}
-            >
-              ⏳ Capsule
-            </button>
+          <div className="flex justify-center mb-10">
+            <div className="glass-panel p-1 rounded-full flex gap-1">
+              <button 
+                onClick={() => setActiveTab("moment")}
+                className={`px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 ${activeTab === "moment" ? "bg-indigo-600 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+              >
+                ⚡ Moment
+              </button>
+              <button 
+                onClick={() => setActiveTab("capsule")}
+                className={`px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 ${activeTab === "capsule" ? "bg-purple-600 text-white shadow-lg" : "text-slate-400 hover:text-white"}`}
+              >
+                ⏳ Capsule
+              </button>
+            </div>
           </div>
 
-          {/* INPUT AREA */}
-          <div className="glass-panel rounded-3xl p-1 mb-12">
-            <div className="bg-black/40 rounded-[1.3rem] p-6 border border-white/5">
+          {/* INPUT CARD */}
+          <div className="glass-panel rounded-3xl p-1 mb-16 relative overflow-hidden">
+             {/* 错误网络提示 */}
+             {!isCorrectNet && (
+              <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+                <span className="text-4xl mb-4">⚠️</span>
+                <h3 className="text-xl font-bold text-white mb-2">Wrong Network</h3>
+                <p className="text-slate-400 mb-6">Please switch your wallet to <span className="text-blue-400">Arbitrum Sepolia</span></p>
+              </div>
+            )}
+
+            <div className="bg-[#0a0a0f] rounded-[1.4rem] p-6 md:p-8 border border-white/5 relative z-10">
               {activeTab === "moment" ? (
                 <div className="animate-fade-in">
                   <textarea 
                     value={momentContent}
                     onChange={(e) => setMomentContent(e.target.value)}
-                    placeholder="Etch a permanent thought on the blockchain..."
-                    className="w-full bg-transparent text-lg text-slate-200 placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
+                    placeholder="Record this moment forever..."
+                    className="w-full bg-transparent text-lg md:text-xl text-white placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
                   ></textarea>
-                  <div className="flex justify-between items-center border-t border-white/10 pt-4 mt-2">
-                    <span className="text-xs text-slate-500 font-mono">TYPE: INSTANT LOG</span>
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-slate-500 font-mono tracking-widest">MODE: INSTANT</span>
                     <button 
                       disabled={loading}
                       onClick={() => handleCreate(momentContent, 0)}
-                      className="btn-neon px-8 py-2 rounded-lg text-sm font-bold text-white disabled:opacity-50"
+                      className="btn-glow px-8 py-3 rounded-lg text-sm font-bold text-white disabled:opacity-50 disabled:grayscale transition"
                     >
-                      {loading ? "Etching..." : "ETCH NOW"}
+                      {loading ? "ETCHING..." : "ETCH MOMENT"}
                     </button>
                   </div>
                 </div>
@@ -389,29 +372,34 @@ function App(){
                   <textarea 
                     value={capsuleContent}
                     onChange={(e) => setCapsuleContent(e.target.value)}
-                    placeholder="Message for the future..."
-                    className="w-full bg-transparent text-lg text-slate-200 placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
+                    placeholder="Write a message to the future..."
+                    className="w-full bg-transparent text-lg md:text-xl text-white placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"
                   ></textarea>
-                  <div className="flex flex-col md:flex-row justify-between items-center border-t border-white/10 pt-4 mt-2 gap-4">
-                    <div className="w-full md:w-auto">
+                  
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
+                  
+                  <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+                    <div className="w-full md:w-auto relative group">
+                      <label className="block text-[10px] text-slate-500 font-mono tracking-widest mb-2 uppercase">Unlock Date</label>
+                      {/* 修复后的日期输入框 */}
                       <input 
                         type="datetime-local" 
                         value={capsuleUnlockAt}
                         onChange={(e) => setCapsuleUnlockAt(e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-purple-500 w-full"
+                        className="w-full md:w-64 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition cursor-pointer relative z-20"
                       />
                     </div>
                     <button 
                       disabled={loading}
                       onClick={() => {
-                        if(!capsuleUnlockAt) return setError("Set Unlock Date");
+                        if(!capsuleUnlockAt) return setError("Set a date first");
                         const ts = Math.floor(new Date(capsuleUnlockAt).getTime() / 1000);
-                        if(ts <= Date.now()/1000) return setError("Date must be future");
+                        if(ts <= Date.now()/1000) return setError("Date must be in future");
                         handleCreate(capsuleContent, ts);
                       }}
-                      className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 px-8 py-2 rounded-lg text-sm font-bold text-white shadow-[0_0_15px_rgba(147,51,234,0.4)] transition disabled:opacity-50"
+                      className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-lg text-sm font-bold text-white shadow-lg shadow-purple-900/40 transition disabled:opacity-50"
                     >
-                      {loading ? "Sealing..." : "SEAL CAPSULE"}
+                      {loading ? "SEALING..." : "SEAL CAPSULE"}
                     </button>
                   </div>
                 </div>
@@ -419,60 +407,60 @@ function App(){
             </div>
           </div>
 
-          {/* LOGS FEED */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2">
-              <span className="text-cyan-400">❖</span> MEMORY BANK
+          {/* LOGS GRID */}
+          <div className="flex items-center justify-between mb-8 px-2">
+            <h2 className="text-xl font-bold flex items-center gap-3">
+              <span className="w-2 h-6 bg-indigo-500 rounded-full"></span>
+              Timeline
             </h2>
-            <button onClick={() => fetchLogs(true)} className="text-xs font-mono text-indigo-300 hover:text-white transition">
-              {refreshing ? "[SYNCING...]" : "[REFRESH DATA]"}
+            <button onClick={() => fetchLogs(true)} className="text-xs font-mono text-slate-500 hover:text-white transition">
+              {refreshing ? "SYNCING..." : "[ REFRESH ]"}
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {logs.length === 0 && <div className="col-span-2 text-center py-12 text-slate-600 font-mono">/ NO DATA FOUND /</div>}
-            
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {logs.map((log) => {
               const isLocked = log.unlockTime > Date.now() / 1000;
               return (
-                <article key={log.id} className="glass-panel rounded-2xl p-6 relative group overflow-hidden transition-all duration-300 hover:bg-white/10">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  
+                <article key={log.id} className="glass-panel rounded-2xl p-6 relative group hover:-translate-y-1 transition-all duration-300">
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`text-[10px] font-bold tracking-widest px-2 py-1 rounded border ${isLocked ? "bg-amber-500/10 border-amber-500/30 text-amber-300" : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"}`}>
-                      {isLocked ? "🔒 LOCKED" : "⚡ UNLOCKED"}
+                    <div className={`text-[10px] font-bold px-2 py-1 rounded border tracking-wider ${isLocked ? "bg-amber-500/10 border-amber-500/30 text-amber-300" : "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"}`}>
+                      {isLocked ? "🔒 LOCKED" : "⚡ OPEN"}
                     </div>
-                    <span className="font-mono text-xs text-slate-500">#{log.id}</span>
+                    <span className="font-mono text-[10px] text-slate-600">#{log.id}</span>
                   </div>
 
-                  <div className="mb-6 text-slate-300 font-light leading-relaxed min-h-[3rem]">
-                    {isLocked 
-                      ? <div className="flex flex-col items-center justify-center h-full py-4 text-amber-500/50 font-mono text-xs gap-2">
-                          <span className="text-2xl opacity-50">🚧</span>
-                          <span>ENCRYPTED UNTIL {fmtTsUnixSec(log.unlockTime)}</span>
-                        </div>
-                      : log.content
-                    }
+                  <div className="mb-6 min-h-[4rem]">
+                    {isLocked ? (
+                      <div className="h-full flex flex-col justify-center items-center text-center border border-dashed border-slate-700 rounded-lg p-4 bg-black/20">
+                        <span className="text-2xl mb-2 opacity-50">⏳</span>
+                        <span className="text-xs font-mono text-slate-500">Unlocks on<br/>{fmtTsUnixSec(log.unlockTime)}</span>
+                      </div>
+                    ) : (
+                      <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-light">{log.content}</p>
+                    )}
                   </div>
 
-                  <div className="flex justify-between items-end border-t border-white/5 pt-4">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Author</span>
-                      <span className="font-mono text-xs text-indigo-300">{shortAddr(log.author)}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] text-slate-500">{fmtTsUnixSec(log.timestamp)}</div>
-                    </div>
+                  <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-slate-500 font-mono">
+                    <span className="truncate max-w-[100px]">{shortAddr(log.author)}</span>
+                    <span>{fmtTsUnixSec(log.timestamp)}</span>
                   </div>
                 </article>
               );
             })}
           </div>
+          
+          {logs.length === 0 && !refreshing && (
+            <div className="text-center py-20 opacity-50 font-mono text-sm">
+              / NO MEMORIES FOUND /
+            </div>
+          )}
         </main>
       )}
 
-      <footer className="mt-20 text-center py-8 border-t border-white/5">
-        <p className="text-slate-600 text-xs font-mono">SECURED BY ARBITRUM SEPOLIA • HACKATHON BUILD 2025</p>
+      <footer className="mt-24 pb-8 text-center">
+        <div className="w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full mb-6"></div>
+        <p className="text-slate-600 text-xs font-mono">SECURED BY ARBITRUM SEPOLIA</p>
       </footer>
 
     </div>
