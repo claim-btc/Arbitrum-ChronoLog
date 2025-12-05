@@ -7,9 +7,7 @@
 
   <script>
     window.onerror = function(msg, url, line) {
-      var loader = document.getElementById('loading-screen');
-      if(loader) loader.style.display = 'none';
-      document.body.innerHTML += '<div style="color:#ff5555; background:#111; padding:20px; position:fixed; top:0; left:0; width:100%; z-index:9999;"><h3>⚠️ 启动中断</h3><p>'+msg+'</p><p>Line: '+line+'</p><p>请不要直接双击打开 HTML，请上传到 GitHub Pages 或使用 VSCode Live Server。</p></div>';
+      document.body.innerHTML += '<div style="color:#ff5555; background:#111; padding:20px; position:fixed; top:0; left:0; width:100%; z-index:9999; font-family:monospace;"><h3>⚠️ 启动中断</h3><p>'+msg+'</p><p>Line: '+line+'</p></div>';
     };
   </script>
 
@@ -54,7 +52,7 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    /* 手机日期完全修复 */
+    /* 手机日期完美修复 */
     .date-wrapper { position: relative; width: 100%; height: 100%; }
     input[type="datetime-local"] {
         position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%;
@@ -65,7 +63,7 @@
 <body>
 
   <div id="loading-screen" style="position:fixed; inset:0; background:#000; z-index:50; display:flex; justify-content:center; align-items:center; color:#666; font-family:monospace;">
-    <div>INITIALIZING SYSTEM...</div>
+    <div>INITIALIZING...</div>
   </div>
 
   <div class="bg-mesh"></div>
@@ -77,12 +75,45 @@
 setTimeout(() => {
   const loader = document.getElementById('loading-screen');
   if(loader) loader.style.display = 'none';
-}, 1000);
+}, 800);
 
 // === 配置 ===
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
-const ABI = [{inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}];
+
+// 🔥 核心修复：ABI 格式化，防止报错 🔥
+const ABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_content", "type": "string" },
+      { "internalType": "uint256", "name": "_unlockTime", "type": "uint256" }
+    ],
+    "name": "createLog",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllLogs",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "address", "name": "author", "type": "address" },
+          { "internalType": "string", "name": "content", "type": "string" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
+        ],
+        "internalType": "struct ChronoLog.Log[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 const { useState, useEffect } = React;
 const ethers = window.ethers;
@@ -93,7 +124,7 @@ function fmtDate(s) { try{const n=Number(s); return n?new Date(n*1000).toLocaleS
 function timeAgo(ts) { const d=Date.now()/1000-Number(ts); if(d<60)return"刚刚"; if(d<3600)return Math.floor(d/60)+"分钟前"; return Math.floor(d/3600)+"小时前"; }
 
 // === 缓存 ===
-const CACHE_KEY = "chrono_safe_v1";
+const CACHE_KEY = "chrono_obsidian_final";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); const o=JSON.parse(r); return (Date.now()-o.t>60000)?null:o.d;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -129,7 +160,7 @@ function App() {
     }
   }, [provider]);
 
-  // 自动清除提示
+  // 自动清理提示
   useEffect(() => { if(status){const t=setTimeout(()=>setStatus(null),5000); return ()=>clearTimeout(t)} }, [status]);
 
   async function fetchLogs(cInstance) {
@@ -152,7 +183,7 @@ function App() {
       let p, t;
       if(mode === 'injected') {
         t = window.okxwallet || window.ethereum;
-        if(!t) throw new Error("请安装 OKX 或 MetaMask 钱包");
+        if(!t) throw new Error("Wallet not found. Install OKX/MetaMask.");
         await t.request({method: "eth_requestAccounts"});
         p = new ethers.BrowserProvider(t, "any");
       } else {
@@ -165,30 +196,30 @@ function App() {
       setProvider(p); setSigner(s); setAccount(a);
       const c = new ethers.Contract(CONTRACT_ADDRESS, ABI, s);
       setContract(c);
-      setStatus({type:'success', msg: "连接成功"});
+      setStatus({type:'success', msg: "Link Established"});
       fetchLogs(c);
     } catch(e) { setStatus({type:'error', msg: e.message}); } 
     finally { setLoading(false); }
   }
 
   async function handleEtch() {
-    if(!signer) return setStatus({type:'error', msg: "请先连接钱包"});
+    if(!signer) return setStatus({type:'error', msg: "Connect Wallet"});
     const txt = tab==='moment' ? inputs.moment : inputs.capsule;
-    if(!txt.trim()) return setStatus({type:'error', msg: "内容不能为空"});
+    if(!txt.trim()) return setStatus({type:'error', msg: "Content Empty"});
     
     let unlock = 0;
     if(tab === 'capsule') {
-      if(!inputs.date) return setStatus({type:'error', msg: "请设置解锁时间"});
+      if(!inputs.date) return setStatus({type:'error', msg: "Set Unlock Date"});
       unlock = Math.floor(new Date(inputs.date).getTime()/1000);
-      if(unlock <= Date.now()/1000) return setStatus({type:'error', msg: "时间必须是未来"});
+      if(unlock <= Date.now()/1000) return setStatus({type:'error', msg: "Future Date Only"});
     }
 
     try {
       setLoading(true);
       const tx = await contract.createLog(txt, BigInt(unlock));
-      setStatus({type:'info', msg: "正在上链..."});
+      setStatus({type:'info', msg: "Broadcasting Tx..."});
       await tx.wait();
-      setStatus({type:'success', msg: "区块确认成功"});
+      setStatus({type:'success', msg: "Block Confirmed"});
       setInputs({ moment: "", capsule: "", date: "" });
       fetchLogs(contract);
     } catch(e) { setStatus({type:'error', msg: e.reason || e.message}); } 
@@ -197,70 +228,72 @@ function App() {
 
   // === 渲染 ===
   return (
-    <div className="font-sans text-gray-200 max-w-5xl mx-auto flex flex-col items-center">
+    <div className="font-sans text-gray-200 min-h-screen p-4 md:p-8 flex flex-col items-center">
       
       {/* 顶部导航 */}
-      <nav className="w-full flex justify-between items-center mb-10 glass-card rounded-full px-6 py-4 mt-4 animate-fade-up">
+      <nav className="w-full max-w-5xl flex justify-between items-center mb-12 glass-card rounded-full px-6 py-3 animate-fade-up">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center font-bold text-white shadow-lg text-xl">C</div>
-          <div>
-            <h1 className="font-bold tracking-tight text-xl leading-none">ChronoLog</h1>
-            <span className="text-[10px] text-gray-400 font-mono tracking-widest">OBSIDIAN VER.</span>
-          </div>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center font-bold text-white shadow-lg shadow-primary-500/30">C</div>
+          <span className="font-bold tracking-tight text-lg">ChronoLog</span>
         </div>
         <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 text-xs font-mono text-gray-500">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            ARBITRUM SEPOLIA
+          </div>
           {account ? (
-            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/10 text-xs font-mono text-green-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            <div className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-gray-300">
               {shortAddr(account)}
             </div>
           ) : (
-            <button onClick={()=>connect('injected')} className="text-xs font-bold bg-white text-black px-5 py-2 rounded-full hover:bg-gray-200 transition">
-              连接钱包
+            <button onClick={()=>connect('injected')} className="text-xs font-semibold bg-white text-black px-4 py-2 rounded-full hover:bg-gray-200 transition">
+              Connect
             </button>
           )}
         </div>
       </nav>
 
-      {/* 状态弹窗 */}
+      {/* 状态提示 */}
       {status && (
-        <div className={`fixed top-28 z-50 px-6 py-3 rounded-full backdrop-blur-xl border shadow-2xl animate-fade-up ${status.type==='error'?'bg-red-500/20 border-red-500/30 text-red-200':'bg-green-500/20 border-green-500/30 text-green-200'}`}>
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full backdrop-blur-xl border shadow-2xl z-50 flex items-center gap-3 animate-fade-up ${status.type==='error'?'bg-red-500/10 border-red-500/20 text-red-200':'bg-green-500/10 border-green-500/20 text-green-200'}`}>
           <span className="text-sm font-medium">{status.msg}</span>
         </div>
       )}
 
-      {/* 主面板 */}
-      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-up">
+      {/* 主内容区 */}
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* 左侧操作区 */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="glass-card rounded-[32px] p-1 overflow-hidden">
-            <div className="bg-obsidian-900/90 p-6 rounded-[28px]">
+        {/* 左侧：操作台 */}
+        <div className="lg:col-span-1 space-y-6 animate-fade-up" style={{animationDelay:'0.1s'}}>
+          
+          {/* 核心输入框 */}
+          <div className="glass-card rounded-3xl p-1 overflow-hidden">
+            <div className="bg-obsidian-900/80 p-6 rounded-[22px]">
               
-              {/* Tabs */}
-              <div className="flex bg-white/5 p-1 rounded-2xl mb-6">
-                <button onClick={()=>setTab('moment')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab==='moment'?'bg-primary-600 text-white shadow-lg':'text-gray-500 hover:text-white'}`}>⚡ 即刻</button>
-                <button onClick={()=>setTab('capsule')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab==='capsule'?'bg-accent-600 text-white shadow-lg':'text-gray-500 hover:text-white'}`}>⏳ 胶囊</button>
+              {/* Tab 切换 */}
+              <div className="flex bg-white/5 p-1 rounded-xl mb-6">
+                <button onClick={()=>setTab('moment')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${tab==='moment'?'bg-primary-600 text-white shadow-lg':'text-gray-400 hover:text-white'}`}>Moment</button>
+                <button onClick={()=>setTab('capsule')} className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${tab==='capsule'?'bg-accent-600 text-white shadow-lg':'text-gray-400 hover:text-white'}`}>Capsule</button>
               </div>
 
-              {/* 输入框 */}
-              <div className="relative group mb-6">
+              {/* 输入区域 */}
+              <div className="relative group">
                 <textarea 
                   value={tab==='moment'?inputs.moment:inputs.capsule}
                   onChange={(e)=>setInputs({...inputs, [tab]:e.target.value})}
                   className="w-full h-40 bg-transparent text-lg text-white placeholder-gray-600 resize-none outline-none font-light leading-relaxed"
-                  placeholder={tab==='moment' ? "记录当下的永恒瞬间..." : "写给未来的秘密信件..."}
+                  placeholder={tab==='moment' ? "What's happening now?" : "Message for the future..."}
                 ></textarea>
-                <div className="absolute bottom-0 left-0 w-full h-px bg-white/10 group-focus-within:bg-primary-500 transition-colors"></div>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent group-focus-within:via-primary-500 transition-all"></div>
               </div>
 
-              {/* 底部操作 */}
-              <div className="flex flex-col gap-4">
+              {/* 底部操作栏 */}
+              <div className="mt-6 flex flex-col gap-4">
                 {tab === 'capsule' && (
-                  <div className="relative flex items-center justify-between bg-white/5 px-4 py-4 rounded-xl border border-white/5 hover:border-white/20 transition group cursor-pointer">
+                  <div className="relative flex items-center justify-between bg-white/5 px-4 py-3 rounded-xl border border-white/5 hover:border-white/20 transition group cursor-pointer">
                     <div className="flex items-center gap-3 text-gray-400 group-hover:text-white transition pointer-events-none">
                       <span>📅</span>
-                      <span className="text-sm font-mono">{inputs.date ? new Date(inputs.date).toLocaleString() : "设置解锁时间"}</span>
+                      <span className="text-sm font-mono">{inputs.date ? new Date(inputs.date).toLocaleString() : "Set Unlock Date"}</span>
                     </div>
                     {/* 手机日期完美修复层 */}
                     <div className="date-wrapper absolute inset-0">
@@ -273,27 +306,28 @@ function App() {
                   <button 
                     onClick={handleEtch} 
                     disabled={loading}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-primary-600 to-accent-600 text-white font-bold text-sm tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-xl bg-white text-black font-bold text-sm tracking-wide hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? "处理中..." : (tab==='moment' ? "铭刻上链" : "封存胶囊")}
+                    {loading ? "PROCESSING..." : (tab==='moment' ? "ETCH MOMENT" : "SEAL CAPSULE")}
                   </button>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={()=>connect('injected')} className="py-4 rounded-xl bg-gray-800 text-white text-xs font-bold hover:bg-gray-700 transition">电脑连接</button>
-                    <button onClick={()=>connect('wc')} className="py-4 rounded-xl border border-white/10 text-white text-xs font-bold hover:bg-white/5 transition">手机扫码</button>
+                    <button onClick={()=>connect('injected')} className="py-3 rounded-xl bg-primary-600 text-white text-xs font-bold hover:bg-primary-500 transition">PC WALLET</button>
+                    <button onClick={()=>connect('wc')} className="py-3 rounded-xl border border-white/20 text-white text-xs font-bold hover:bg-white/10 transition">MOBILE QR</button>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
         </div>
 
-        {/* 右侧列表区 */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* 右侧：日志流 */}
+        <div className="lg:col-span-2 space-y-6 animate-fade-up" style={{animationDelay:'0.2s'}}>
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2"><span className="w-1 h-6 bg-primary-500 rounded-full"></span> 时间轴</h2>
-            <button onClick={()=>fetchLogs(contract)} disabled={isRefreshing} className="text-xs font-mono text-gray-500 hover:text-white transition">
-              {isRefreshing ? "同步中..." : "[ 刷新数据 ]"}
+            <h2 className="text-xl font-semibold tracking-tight">Timeline</h2>
+            <button onClick={()=>fetchLogs(contract)} disabled={isRefreshing} className="p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition">
+              <span className={`block ${isRefreshing?'animate-spin':''}`}>↻</span>
             </button>
           </div>
 
@@ -304,19 +338,19 @@ function App() {
                 <div key={log.id} className="glass-card rounded-2xl p-6 hover:-translate-y-1 transition-transform duration-300 group">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold px-2 py-1 rounded border ${isLocked ? 'bg-accent-500/10 border-accent-500/30 text-accent-400' : 'bg-primary-500/10 border-primary-500/30 text-primary-400'}`}>
+                      <div className={`px-2 py-1 text-[10px] font-bold rounded ${isLocked ? 'bg-accent-500/20 text-accent-400' : 'bg-primary-500/20 text-primary-400'}`}>
                         {isLocked ? 'LOCKED' : 'OPEN'}
-                      </span>
-                      <span className="text-[10px] font-mono text-gray-600">#{log.id}</span>
+                      </div>
+                      <span className="text-xs font-mono text-gray-500">#{log.id}</span>
                     </div>
-                    <span className="text-[10px] font-mono text-gray-500">{timeAgo(log.ts)}</span>
+                    <span className="text-[10px] font-mono text-gray-600 bg-white/5 px-2 py-1 rounded">{timeAgo(log.ts)}</span>
                   </div>
 
                   <div className="min-h-[80px] mb-4">
                     {isLocked ? (
-                      <div className="h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-white/10 rounded-xl bg-black/20">
-                        <span className="text-2xl mb-2 opacity-50">🔒</span>
-                        <span className="text-[10px] font-mono text-gray-500">解锁时间<br/>{fmtDate(log.unlock)}</span>
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-white/10 rounded-xl">
+                        <span className="text-xs font-mono text-accent-400 mb-1">ENCRYPTED DATA</span>
+                        <span className="text-[10px] text-gray-500">Unlocks {fmtDate(log.unlock)}</span>
                       </div>
                     ) : (
                       <p className="text-sm text-gray-200 leading-relaxed font-light">{log.content}</p>
@@ -325,16 +359,19 @@ function App() {
 
                   <div className="flex items-center justify-between pt-4 border-t border-white/5">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10"></div>
-                      <span className="text-[10px] font-mono text-gray-400">{shortAddr(log.author)}</span>
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-700 to-gray-900"></div>
+                      <span className="text-xs font-mono text-gray-400">{shortAddr(log.author)}</span>
                     </div>
+                    {isLocked && <div className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse"></div>}
                   </div>
                 </div>
               )
             })}
             
             {logs.length === 0 && !isRefreshing && (
-              <div className="col-span-full py-20 text-center opacity-50 font-mono text-sm">链上暂无数据</div>
+              <div className="col-span-full py-20 text-center">
+                <p className="text-gray-500 text-sm">No data blocks found on chain.</p>
+              </div>
             )}
           </div>
         </div>
