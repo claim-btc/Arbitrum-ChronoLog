@@ -1,389 +1,352 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>ChronoLog — Eternal Memory</title>
+  <title>ChronoLog - OBSIDIAN</title>
 
   <script>
     window.onerror = function(msg, url, line) {
-      document.body.innerHTML = '<div style="padding:20px; color:red; background:black; font-size:16px;">💥 发生错误:<br>' + msg + '<br>行号: ' + line + '</div>';
+      var loader = document.getElementById('loading-screen');
+      if(loader) loader.style.display = 'none';
+      document.body.innerHTML += '<div style="color:#ff5555; background:#111; padding:20px; position:fixed; top:0; left:0; width:100%; z-index:9999;"><h3>⚠️ 启动中断</h3><p>'+msg+'</p><p>Line: '+line+'</p><p>请不要直接双击打开 HTML，请上传到 GitHub Pages 或使用 VSCode Live Server。</p></div>';
     };
   </script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
+  <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    window.tailwind = {
-      config: {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            fontFamily: { sans: ['"Space Grotesk"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
-            colors: { cyber: { dark: '#030307' } },
-            animation: { 'blob': 'blob 20s infinite', 'text-shimmer': 'textShimmer 3s linear infinite' },
-            keyframes: {
-              blob: { '0%': { transform: 'translate(0px, 0px) scale(1)' }, '33%': { transform: 'translate(30px, -50px) scale(1.1)' }, '66%': { transform: 'translate(-20px, 20px) scale(0.9)' }, '100%': { transform: 'translate(0px, 0px) scale(1)' } },
-              textShimmer: { '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' }, '50%': { 'background-size': '200% 200%', 'background-position': 'right center' } }
-            }
-          }
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Inter"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+          colors: { 
+            obsidian: { 900: '#050505', 800: '#0a0a0a', 700: '#121212' },
+            primary: { 500: '#6366f1', 600: '#4f46e5' },
+            accent: { 500: '#ec4899', 600: '#db2777' }
+          },
+          animation: { 'fade-up': 'fadeUp 0.8s ease-out forwards' },
+          keyframes: { fadeUp: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } } }
         }
       }
-    };
+    }
   </script>
-  <script src="https://cdn.tailwindcss.com"></script>
 
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
   <style>
-    /* === 手机日期修复核心 CSS === */
+    body { background-color: #000; color: #fff; overflow-x: hidden; }
+    /* 动态背景 */
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: -1;
+      background: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 40%),
+                  radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.15), transparent 40%);
+    }
+    /* 磨砂卡片 */
+    .glass-card {
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    /* 手机日期完全修复 */
+    .date-wrapper { position: relative; width: 100%; height: 100%; }
     input[type="datetime-local"] {
-        appearance: none;
-        -webkit-appearance: none;
-        color-scheme: dark;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 0.5rem;
-        padding: 12px;
-        font-size: 16px;
-        min-height: 50px;
-        width: 100%;
-        display: block;
-        position: relative;
-        z-index: 50; /* 确保在最上层 */
-        cursor: pointer;
+        position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%;
+        z-index: 50; cursor: pointer; color-scheme: dark;
     }
-
-    /* 全局背景 */
-    body {
-      background-color: #030307;
-      background-image: radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.15), transparent 25%), radial-gradient(circle at 85% 30%, rgba(37, 99, 235, 0.15), transparent 25%);
-      color: #e2e8f0; 
-      overflow-x: hidden; 
-      font-family: "Space Grotesk", sans-serif;
-    }
-    
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.03); 
-      backdrop-filter: blur(16px); 
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.08); 
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .btn-glow {
-      background: linear-gradient(90deg, #4f46e5, #9333ea); 
-      background-size: 200% 200%; 
-      animation: textShimmer 3s ease infinite;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    * { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
-<body class="antialiased min-h-screen relative">
+<body>
 
-  <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-    <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
-    <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-blue-900/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
+  <div id="loading-screen" style="position:fixed; inset:0; background:#000; z-index:50; display:flex; justify-content:center; align-items:center; color:#666; font-family:monospace;">
+    <div>INITIALIZING SYSTEM...</div>
   </div>
 
-  <div id="root" class="relative z-10 px-4 py-8 md:py-16 max-w-5xl mx-auto"></div>
+  <div class="bg-mesh"></div>
+  <div id="root" class="relative z-10 pb-20 p-4"></div>
 
 <script type="text/babel">
 
-// 配置
-const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
-const ARBITRUM_SEPOLIA_CHAIN_ID_DEC = 421614;
+// 移除 loading 画面
+setTimeout(() => {
+  const loader = document.getElementById('loading-screen');
+  if(loader) loader.style.display = 'none';
+}, 1000);
 
-const ABI = [
-  {inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}
-];
+// === 配置 ===
+const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
+const CHAIN_ID = 421614;
+const ABI = [{inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}];
 
 const { useState, useEffect } = React;
 const ethers = window.ethers;
 
-// 工具函数
-function shortAddr(a) { if(!a) return ""; return a.slice(0,6)+"…"+a.slice(-4); }
-function fmtTsUnixSec(s) { try{ const n=Number(s); return n?new Date(n*1000).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):"-"; } catch{ return "-"; } }
+// === 工具 ===
+function shortAddr(a) { return a ? a.slice(0,6)+"···"+a.slice(-4) : "未连接"; }
+function fmtDate(s) { try{const n=Number(s); return n?new Date(n*1000).toLocaleString():"-";}catch{return "-";} }
+function timeAgo(ts) { const d=Date.now()/1000-Number(ts); if(d<60)return"刚刚"; if(d<3600)return Math.floor(d/60)+"分钟前"; return Math.floor(d/3600)+"小时前"; }
 
-// 缓存管理
-const LOGS_CACHE_KEY = "chronolog_cache_v_safe";
-function readLogsCache() { try { const r=localStorage.getItem(LOGS_CACHE_KEY); if(!r) return null; const o=JSON.parse(r); return (Date.now()-o.timestamp)>60000 ? null : o.data; } catch{ return null; } }
-function writeLogsCache(d) { try { localStorage.setItem(LOGS_CACHE_KEY, JSON.stringify({timestamp:Date.now(),data:d})); } catch{} }
+// === 缓存 ===
+const CACHE_KEY = "chrono_safe_v1";
+function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); const o=JSON.parse(r); return (Date.now()-o.t>60000)?null:o.d;}catch{return null;} }
+function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
-// WalletConnect
-async function createWalletConnectProvider() {
-  const r = {}; r[ARBITRUM_SEPOLIA_CHAIN_ID_DEC] = "https://sepolia-rollup.arbitrum.io/rpc";
-  if(!window.WalletConnectProvider) throw new Error("WalletConnect missing");
+// === WalletConnect ===
+async function getWCProvider() {
+  const rpc={}; rpc[CHAIN_ID]="https://sepolia-rollup.arbitrum.io/rpc";
   const WCP = window.WalletConnectProvider.default || window.WalletConnectProvider;
-  return new WCP({rpc:r, chainId:ARBITRUM_SEPOLIA_CHAIN_ID_DEC, qrcode:true});
+  return new WCP({rpc:rpc, chainId:CHAIN_ID, qrcode:true});
 }
 
-// 提示组件
-function Notice({kind="info", children}) {
-  const clrs = {
-    error: "border-red-500/50 bg-red-900/20 text-red-200",
-    success: "border-green-500/50 bg-green-900/20 text-green-200",
-    info: "border-blue-500/50 bg-blue-900/20 text-blue-200"
-  };
-  return (
-    <div className={`p-4 rounded-xl border backdrop-blur-md mb-6 animate-fade-in flex items-start gap-3 shadow-lg ${clrs[kind] || clrs.info}`}>
-      <span className="text-xl mt-0.5">{kind==='error'?'🚨':kind==='success'?'✨':'ℹ️'}</span>
-      <span className="font-medium text-sm pt-1">{children}</span>
-    </div>
-  );
-}
-
-// 主应用
 function App() {
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [account, setAccount] = useState(null);
-  const [network, setNetwork] = useState(null);
   const [contract, setContract] = useState(null);
-  
-  const [activeTab, setActiveTab] = useState("moment");
-  const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState(null);
-  const [error, setError] = useState(null);
-  
-  const [momentContent, setMomentContent] = useState("");
-  const [capsuleContent, setCapsuleContent] = useState("");
-  const [capsuleUnlockAt, setCapsuleUnlockAt] = useState("");
-  
   const [logs, setLogs] = useState([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState(null);
+  const [tab, setTab] = useState("moment");
+  const [inputs, setInputs] = useState({ moment: "", capsule: "", date: "" });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 初始化加载
-  useEffect(() => { const c=readLogsCache(); if(c) setLogs(c); }, []);
-  
-  // 自动清除提示
-  useEffect(() => { 
-    if(notice||error) { const t=setTimeout(()=>{setNotice(null);setError(null)},6000); return ()=>clearTimeout(t); } 
-  }, [notice, error]);
-
-  // Read-only 连接
+  // 初始化只读
   useEffect(() => {
+    const c = loadCache(); if(c) setLogs(c);
     if(!provider) {
-      const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"Arbitrum Sepolia", chainId:ARBITRUM_SEPOLIA_CHAIN_ID_DEC});
-      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc));
-      setNetwork({chainId: BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)});
-      if(logs.length===0) fetchLogsInternal(new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc));
+      try {
+        const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"ArbSepolia", chainId:CHAIN_ID});
+        const cInstance = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
+        setContract(cInstance);
+        if(!c) fetchLogs(cInstance);
+      } catch(e) {}
     }
   }, [provider]);
 
-  // 连接: PC 插件 (OKX优先)
-  async function connectInjected() {
-    setError(null); setNotice(null);
-    let t = window.okxwallet || window.ethereum;
-    if(!t) return setError("Please install OKX Wallet.");
+  // 自动清除提示
+  useEffect(() => { if(status){const t=setTimeout(()=>setStatus(null),5000); return ()=>clearTimeout(t)} }, [status]);
+
+  async function fetchLogs(cInstance) {
+    if(!cInstance) return;
+    setIsRefreshing(true);
     try {
-      setLoading(true); 
-      await t.request({method:"eth_requestAccounts"});
-      const p = new ethers.BrowserProvider(t, "any");
-      const s = await p.getSigner();
-      const addr = await s.getAddress();
-      const net = await p.getNetwork();
-      setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
-      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
-      setNotice("Connected: " + shortAddr(addr));
-    } catch(e) { setError(e.message); } finally { setLoading(false); }
+      const raw = await cInstance.getAllLogs();
+      const fmt = raw.map(r => ({
+        id: Number(r.id), author: r.author, content: r.content,
+        ts: Number(r.timestamp), unlock: Number(r.unlockTime)
+      })).sort((a,b) => b.id - a.id);
+      setLogs(fmt); saveCache(fmt);
+    } catch(e) { console.error(e); }
+    finally { setIsRefreshing(false); }
   }
 
-  // 连接: 手机扫码
-  async function connectWC() {
-    setError(null); setNotice(null);
+  async function connect(mode) {
+    setStatus(null); setLoading(true);
     try {
-      setLoading(true); 
-      const wc = await createWalletConnectProvider(); 
-      await wc.enable();
-      const p = new ethers.BrowserProvider(wc, "any");
+      let p, t;
+      if(mode === 'injected') {
+        t = window.okxwallet || window.ethereum;
+        if(!t) throw new Error("请安装 OKX 或 MetaMask 钱包");
+        await t.request({method: "eth_requestAccounts"});
+        p = new ethers.BrowserProvider(t, "any");
+      } else {
+        const wc = await getWCProvider(); await wc.enable();
+        p = new ethers.BrowserProvider(wc, "any");
+        wc.on("disconnect", () => window.location.reload());
+      }
       const s = await p.getSigner();
-      const addr = await s.getAddress();
-      const net = await p.getNetwork();
-      setProvider(p); setSigner(s); setAccount(addr); setNetwork(net);
-      setContract(new ethers.Contract(CONTRACT_ADDRESS, ABI, s));
-      setNotice("Mobile Connected: " + shortAddr(addr));
-      wc.on("disconnect", ()=>window.location.reload());
-    } catch(e) { setError("Connection failed"); } finally { setLoading(false); }
+      const a = await s.getAddress();
+      setProvider(p); setSigner(s); setAccount(a);
+      const c = new ethers.Contract(CONTRACT_ADDRESS, ABI, s);
+      setContract(c);
+      setStatus({type:'success', msg: "连接成功"});
+      fetchLogs(c);
+    } catch(e) { setStatus({type:'error', msg: e.message}); } 
+    finally { setLoading(false); }
   }
 
-  // 创建交易
-  async function handleCreate(c, u) {
-    if(!signer) return setError("Wallet disconnected");
-    if(!c.trim()) return setError("Please write something");
-    if(network.chainId !== BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC)) return setError("Wrong Network! Switch to Arbitrum Sepolia");
+  async function handleEtch() {
+    if(!signer) return setStatus({type:'error', msg: "请先连接钱包"});
+    const txt = tab==='moment' ? inputs.moment : inputs.capsule;
+    if(!txt.trim()) return setStatus({type:'error', msg: "内容不能为空"});
+    
+    let unlock = 0;
+    if(tab === 'capsule') {
+      if(!inputs.date) return setStatus({type:'error', msg: "请设置解锁时间"});
+      unlock = Math.floor(new Date(inputs.date).getTime()/1000);
+      if(unlock <= Date.now()/1000) return setStatus({type:'error', msg: "时间必须是未来"});
+    }
 
     try {
       setLoading(true);
-      const tx = await contract.createLog(c, BigInt(u));
-      setNotice("Broadcasting...");
+      const tx = await contract.createLog(txt, BigInt(unlock));
+      setStatus({type:'info', msg: "正在上链..."});
       await tx.wait();
-      setNotice("Successfully Etched! 🎉");
-      setMomentContent(""); setCapsuleContent(""); setCapsuleUnlockAt("");
-      fetchLogs(true);
-    } catch(e) { 
-      console.error(e); 
-      setError("Failed: " + (e.reason||e.message)); 
-    } finally { setLoading(false); }
+      setStatus({type:'success', msg: "区块确认成功"});
+      setInputs({ moment: "", capsule: "", date: "" });
+      fetchLogs(contract);
+    } catch(e) { setStatus({type:'error', msg: e.reason || e.message}); } 
+    finally { setLoading(false); }
   }
 
-  // 获取日志
-  async function fetchLogs(bypass) { if(contract) fetchLogsInternal(contract, bypass); }
-  async function fetchLogsInternal(c, bypass) {
-    setRefreshing(true);
-    try {
-      if(!bypass) { const cached=readLogsCache(); if(cached){setLogs(cached);setRefreshing(false);return;} }
-      const raw = await c.getAllLogs();
-      const fmt = raw.map(r=>({
-        id:Number(r.id), author:r.author, content:r.content, timestamp:Number(r.timestamp), unlockTime:Number(r.unlockTime)
-      })).sort((a,b)=>b.id-a.id);
-      setLogs(fmt); writeLogsCache(fmt);
-    } catch(e){ console.error(e); } finally { setRefreshing(false); }
-  }
-
-  const isCorrectNet = network?.chainId === BigInt(ARBITRUM_SEPOLIA_CHAIN_ID_DEC);
-
+  // === 渲染 ===
   return (
-    <div className="text-slate-200">
+    <div className="font-sans text-gray-200 max-w-5xl mx-auto flex flex-col items-center">
       
-      {/* 头部 */}
-      <header className="flex flex-col md:flex-row justify-between items-center mb-10 animate-fade-in">
-        <div className="text-center md:text-left mb-6 md:mb-0">
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 animate-text-shimmer pb-2">ChronoLog</h1>
-          <p className="font-mono text-xs md:text-sm text-slate-400 tracking-[0.2em] uppercase">Immutable • Eternal • Arbitrum</p>
+      {/* 顶部导航 */}
+      <nav className="w-full flex justify-between items-center mb-10 glass-card rounded-full px-6 py-4 mt-4 animate-fade-up">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center font-bold text-white shadow-lg text-xl">C</div>
+          <div>
+            <h1 className="font-bold tracking-tight text-xl leading-none">ChronoLog</h1>
+            <span className="text-[10px] text-gray-400 font-mono tracking-widest">OBSIDIAN VER.</span>
+          </div>
         </div>
-        {account ? (
-          <div className="glass-panel px-5 py-2 rounded-full flex items-center gap-3 animate-fade-in">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="font-mono text-sm text-green-300">{shortAddr(account)}</span>
-          </div>
-        ) : (
-          <div className="hidden md:block text-xs text-slate-500 font-mono">NOT CONNECTED</div>
-        )}
-      </header>
-
-      {/* 提示信息 */}
-      {notice && <Notice kind="success">{notice}</Notice>}
-      {error && <Notice kind="error">{error}</Notice>}
-
-      {/* 登录界面 */}
-      {!account && (
-        <div className="glass-panel rounded-3xl p-8 md:p-12 text-center max-w-2xl mx-auto border-t border-white/10 shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition duration-500"></div>
-          <div className="relative z-10">
-            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-2xl mx-auto flex items-center justify-center mb-8 shadow-xl transform rotate-3 group-hover:rotate-6 transition duration-300"><span className="text-4xl">🔗</span></div>
-            <h2 className="text-3xl font-bold mb-3 text-white">Initialize Link</h2>
-            <p className="text-slate-400 mb-10 max-w-md mx-auto">Connect your wallet to access the Arbitrum Sepolia timeline.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button onClick={connectInjected} className="btn-glow px-8 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition transform hover:scale-105"><span>💻</span> PC Connect</button>
-              <button onClick={connectWC} className="glass-panel hover:bg-white/10 px-8 py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition transform hover:scale-105 border border-white/20"><span>📱</span> Mobile QR</button>
+        <div className="flex items-center gap-4">
+          {account ? (
+            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/10 text-xs font-mono text-green-400 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              {shortAddr(account)}
             </div>
-          </div>
+          ) : (
+            <button onClick={()=>connect('injected')} className="text-xs font-bold bg-white text-black px-5 py-2 rounded-full hover:bg-gray-200 transition">
+              连接钱包
+            </button>
+          )}
+        </div>
+      </nav>
+
+      {/* 状态弹窗 */}
+      {status && (
+        <div className={`fixed top-28 z-50 px-6 py-3 rounded-full backdrop-blur-xl border shadow-2xl animate-fade-up ${status.type==='error'?'bg-red-500/20 border-red-500/30 text-red-200':'bg-green-500/20 border-green-500/30 text-green-200'}`}>
+          <span className="text-sm font-medium">{status.msg}</span>
         </div>
       )}
 
-      {/* 主界面 */}
-      {account && (
-        <main className="animate-fade-in">
-          <div className="flex justify-center mb-10">
-            <div className="glass-panel p-1 rounded-full flex gap-1">
-              <button onClick={()=>setActiveTab("moment")} className={`px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 ${activeTab==="moment"?"bg-indigo-600 text-white shadow-lg":"text-slate-400 hover:text-white"}`}>⚡ Moment</button>
-              <button onClick={()=>setActiveTab("capsule")} className={`px-8 py-3 rounded-full font-bold text-sm transition-all duration-300 ${activeTab==="capsule"?"bg-purple-600 text-white shadow-lg":"text-slate-400 hover:text-white"}`}>⏳ Capsule</button>
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-3xl p-1 mb-16 relative overflow-hidden">
-             {!isCorrectNet && (
-              <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                <span className="text-4xl mb-4">⚠️</span>
-                <h3 className="text-xl font-bold text-white mb-2">Wrong Network</h3>
-                <p className="text-slate-400 mb-6">Switch wallet to <span className="text-blue-400">Arbitrum Sepolia</span></p>
+      {/* 主面板 */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-up">
+        
+        {/* 左侧操作区 */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="glass-card rounded-[32px] p-1 overflow-hidden">
+            <div className="bg-obsidian-900/90 p-6 rounded-[28px]">
+              
+              {/* Tabs */}
+              <div className="flex bg-white/5 p-1 rounded-2xl mb-6">
+                <button onClick={()=>setTab('moment')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab==='moment'?'bg-primary-600 text-white shadow-lg':'text-gray-500 hover:text-white'}`}>⚡ 即刻</button>
+                <button onClick={()=>setTab('capsule')} className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all ${tab==='capsule'?'bg-accent-600 text-white shadow-lg':'text-gray-500 hover:text-white'}`}>⏳ 胶囊</button>
               </div>
-             )}
-             
-            <div className="bg-[#0a0a0f] rounded-[1.4rem] p-6 md:p-8 border border-white/5 relative z-10">
-              {activeTab === "moment" ? (
-                <div className="animate-fade-in">
-                  <textarea value={momentContent} onChange={(e)=>setMomentContent(e.target.value)} placeholder="Record this moment forever..." className="w-full bg-transparent text-lg md:text-xl text-white placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"></textarea>
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-4"></div>
-                  <div className="flex justify-between items-center"><span className="text-[10px] text-slate-500 font-mono tracking-widest">MODE: INSTANT</span><button disabled={loading} onClick={()=>handleCreate(momentContent,0)} className="btn-glow px-8 py-3 rounded-lg text-sm font-bold text-white disabled:opacity-50 disabled:grayscale transition">{loading?"ETCHING...":"ETCH MOMENT"}</button></div>
-                </div>
-              ) : (
-                <div className="animate-fade-in">
-                  <textarea value={capsuleContent} onChange={(e)=>setCapsuleContent(e.target.value)} placeholder="Write a message to the future..." className="w-full bg-transparent text-lg md:text-xl text-white placeholder-slate-600 border-none focus:ring-0 resize-none h-32 font-sans"></textarea>
-                  <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent my-6"></div>
-                  <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                    <div className="w-full md:w-auto">
-                      <label className="block text-[10px] text-slate-500 font-mono tracking-widest mb-2 uppercase">Unlock Date</label>
-                      
-                      {/* --- 手机日期修复点 --- */}
-                      <input 
-                        type="datetime-local" 
-                        value={capsuleUnlockAt} 
-                        onChange={(e)=>setCapsuleUnlockAt(e.target.value)} 
-                        className="w-full md:w-64"
-                      />
-                      
+
+              {/* 输入框 */}
+              <div className="relative group mb-6">
+                <textarea 
+                  value={tab==='moment'?inputs.moment:inputs.capsule}
+                  onChange={(e)=>setInputs({...inputs, [tab]:e.target.value})}
+                  className="w-full h-40 bg-transparent text-lg text-white placeholder-gray-600 resize-none outline-none font-light leading-relaxed"
+                  placeholder={tab==='moment' ? "记录当下的永恒瞬间..." : "写给未来的秘密信件..."}
+                ></textarea>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-white/10 group-focus-within:bg-primary-500 transition-colors"></div>
+              </div>
+
+              {/* 底部操作 */}
+              <div className="flex flex-col gap-4">
+                {tab === 'capsule' && (
+                  <div className="relative flex items-center justify-between bg-white/5 px-4 py-4 rounded-xl border border-white/5 hover:border-white/20 transition group cursor-pointer">
+                    <div className="flex items-center gap-3 text-gray-400 group-hover:text-white transition pointer-events-none">
+                      <span>📅</span>
+                      <span className="text-sm font-mono">{inputs.date ? new Date(inputs.date).toLocaleString() : "设置解锁时间"}</span>
                     </div>
-                    <button disabled={loading} onClick={()=>{if(!capsuleUnlockAt)return setError("Set a date first");const ts=Math.floor(new Date(capsuleUnlockAt).getTime()/1000);if(ts<=Date.now()/1000)return setError("Date must be in future");handleCreate(capsuleContent,ts)}} className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-lg text-sm font-bold text-white shadow-lg shadow-purple-900/40 transition disabled:opacity-50">{loading?"SEALING...":"SEAL CAPSULE"}</button>
+                    {/* 手机日期完美修复层 */}
+                    <div className="date-wrapper absolute inset-0">
+                      <input type="datetime-local" value={inputs.date} onChange={(e)=>setInputs({...inputs, date:e.target.value})} />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {account ? (
+                  <button 
+                    onClick={handleEtch} 
+                    disabled={loading}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-primary-600 to-accent-600 text-white font-bold text-sm tracking-widest hover:brightness-110 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "处理中..." : (tab==='moment' ? "铭刻上链" : "封存胶囊")}
+                  </button>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={()=>connect('injected')} className="py-4 rounded-xl bg-gray-800 text-white text-xs font-bold hover:bg-gray-700 transition">电脑连接</button>
+                    <button onClick={()=>connect('wc')} className="py-4 rounded-xl border border-white/10 text-white text-xs font-bold hover:bg-white/5 transition">手机扫码</button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* 日志列表 */}
-          <div className="flex items-center justify-between mb-8 px-2">
-            <h2 className="text-xl font-bold flex items-center gap-3"><span className="w-2 h-6 bg-indigo-500 rounded-full"></span>Timeline</h2>
-            <button onClick={()=>fetchLogs(true)} className="text-xs font-mono text-slate-500 hover:text-white transition">{refreshing?"SYNCING...":"[ REFRESH ]"}</button>
+        {/* 右侧列表区 */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-xl font-bold tracking-tight flex items-center gap-2"><span className="w-1 h-6 bg-primary-500 rounded-full"></span> 时间轴</h2>
+            <button onClick={()=>fetchLogs(contract)} disabled={isRefreshing} className="text-xs font-mono text-gray-500 hover:text-white transition">
+              {isRefreshing ? "同步中..." : "[ 刷新数据 ]"}
+            </button>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {logs.map((log)=>{
-              const isLocked=log.unlockTime>Date.now()/1000;
-              return(
-                <article key={log.id} className="glass-panel rounded-2xl p-6 relative group hover:-translate-y-1 transition-all duration-300">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {logs.map((log) => {
+              const isLocked = log.unlock > Date.now()/1000;
+              return (
+                <div key={log.id} className="glass-card rounded-2xl p-6 hover:-translate-y-1 transition-transform duration-300 group">
                   <div className="flex justify-between items-start mb-4">
-                    <div className={`text-[10px] font-bold px-2 py-1 rounded border tracking-wider ${isLocked?"bg-amber-500/10 border-amber-500/30 text-amber-300":"bg-cyan-500/10 border-cyan-500/30 text-cyan-300"}`}>{isLocked?"🔒 LOCKED":"⚡ OPEN"}</div>
-                    <span className="font-mono text-[10px] text-slate-600">#{log.id}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded border ${isLocked ? 'bg-accent-500/10 border-accent-500/30 text-accent-400' : 'bg-primary-500/10 border-primary-500/30 text-primary-400'}`}>
+                        {isLocked ? 'LOCKED' : 'OPEN'}
+                      </span>
+                      <span className="text-[10px] font-mono text-gray-600">#{log.id}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-gray-500">{timeAgo(log.ts)}</span>
                   </div>
-                  <div className="mb-6 min-h-[4rem]">
-                    {isLocked?(
-                      <div className="h-full flex flex-col justify-center items-center text-center border border-dashed border-slate-700 rounded-lg p-4 bg-black/20">
-                        <span className="text-2xl mb-2 opacity-50">⏳</span>
-                        <span className="text-xs font-mono text-slate-500">Unlocks on<br/>{fmtTsUnixSec(log.unlockTime)}</span>
+
+                  <div className="min-h-[80px] mb-4">
+                    {isLocked ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-4 border border-dashed border-white/10 rounded-xl bg-black/20">
+                        <span className="text-2xl mb-2 opacity-50">🔒</span>
+                        <span className="text-[10px] font-mono text-gray-500">解锁时间<br/>{fmtDate(log.unlock)}</span>
                       </div>
-                    ):(
-                      <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap font-light">{log.content}</p>
+                    ) : (
+                      <p className="text-sm text-gray-200 leading-relaxed font-light">{log.content}</p>
                     )}
                   </div>
-                  <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] text-slate-500 font-mono">
-                    <span className="truncate max-w-[100px]">{shortAddr(log.author)}</span>
-                    <span>{fmtTsUnixSec(log.timestamp)}</span>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10"></div>
+                      <span className="text-[10px] font-mono text-gray-400">{shortAddr(log.author)}</span>
+                    </div>
                   </div>
-                </article>
+                </div>
               )
             })}
+            
+            {logs.length === 0 && !isRefreshing && (
+              <div className="col-span-full py-20 text-center opacity-50 font-mono text-sm">链上暂无数据</div>
+            )}
           </div>
-          {logs.length===0&&!refreshing&&(<div className="text-center py-20 opacity-50 font-mono text-sm">/ NO MEMORIES FOUND /</div>)}
-        </main>
-      )}
+        </div>
 
-      <footer className="mt-24 pb-8 text-center"><div className="w-12 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 mx-auto rounded-full mb-6"></div><p className="text-slate-600 text-xs font-mono">SECURED BY ARBITRUM SEPOLIA</p></footer>
+      </div>
     </div>
   );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App/>);
+root.render(<App />);
+
 </script>
 </body>
 </html>
