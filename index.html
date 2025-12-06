@@ -122,8 +122,40 @@
 // === 1. 区块链配置 ===
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
-// 标准化的 ABI
-const ABI = [{inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}];
+
+// 🔥 核心修复：ABI 展开写，防止报错 🔥
+const ABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_content", "type": "string" },
+      { "internalType": "uint256", "name": "_unlockTime", "type": "uint256" }
+    ],
+    "name": "createLog",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllLogs",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "address", "name": "author", "type": "address" },
+          { "internalType": "string", "name": "content", "type": "string" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
+        ],
+        "internalType": "struct ChronoLog.Log[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 const { useState, useEffect } = React;
 const ethers = window.ethers;
@@ -162,10 +194,12 @@ function App() {
   useEffect(() => {
     const c = loadCache(); if(c) setLogs(c);
     if(!provider) {
-      const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"ArbSepolia", chainId:CHAIN_ID});
-      const cInstance = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
-      setContract(cInstance);
-      if(!c) fetchLogs(cInstance);
+      try {
+        const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"ArbSepolia", chainId:CHAIN_ID});
+        const cInstance = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
+        setContract(cInstance);
+        if(!c) fetchLogs(cInstance);
+      } catch(e) {}
     }
   }, [provider]);
 
