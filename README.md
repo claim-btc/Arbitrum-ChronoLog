@@ -60,6 +60,12 @@ This project is fully decentralized and hosted on GitHub Pages.
 
 ### [🚀 Click Here to Launch Live Demo](https://claim-btc.github.io/Arbitrum-ChronoLog/)
 
+### ⚠️ Note for Judges
+To interact with the App (Write Diary / Bury Capsule), you need some **Arbitrum Sepolia ETH** for gas fees.
+If your wallet is empty, please claim free testnet tokens here:
+* [🚰 Arbitrum Sepolia Faucet (Official)](https://faucet.quicknode.com/arbitrum/sepolia)
+* [🚰 Alchemy Faucet](https://www.alchemy.com/faucets/arbitrum-sepolia)
+
 ---
 
 ## 🗺️ Roadmap
