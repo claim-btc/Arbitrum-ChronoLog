@@ -32,11 +32,11 @@ By combining **Pixel Art aesthetics** with **SocialFi mechanics**, we created a 
 
 ## 📸 Screenshots
 
-| **Immersive Main Interface** ☀️ |
+|  **RPG Login System** 🎒 |
 |:---:|
 | ![Main UI](https://github.com/user-attachments/assets/f16368a6-a46f-4131-b74c-1e83018aa0cf) |
 
-| **RPG Login System** 🎒 | **SocialFi & Mobile** 📱 |
+| Time Capsule Mode ⏳|Diary Mode (Instant Log) 📖 |
 |:---:|:---:|
 | ![Login](https://github.com/user-attachments/assets/32be38bc-f031-46d0-9230-22a1dd9a98ef) | ![Feature](https://github.com/user-attachments/assets/707a687a-d466-47fb-969e-4bac4baa3c85) |
 
