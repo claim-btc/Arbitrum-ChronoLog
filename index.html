@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - DELUXE</title>
+  <title>Chrono Valley - V11</title>
 
   <script>
     window.onerror = function(msg, url, line) {
@@ -20,8 +20,7 @@
         extend: {
           fontFamily: { 'pixel': ['"Press Start 2P"', 'cursive'], 'hand': ['"VT323"', 'monospace'] },
           colors: { wood: { light: '#e69c69', DEFAULT: '#a05b32', dark: '#5d351e', border: '#3e2723' }, paper: '#fff8e1', grass: '#76c442', sky: '#81d4fa', night: '#1a1a2e' },
-          animation: { 'bounce-slow': 'bounce 3s infinite', 'rain': 'rain 0.5s linear infinite' },
-          keyframes: { rain: { '0%': { transform: 'translateY(-10px)' }, '100%': { transform: 'translateY(100vh)' } } }
+          animation: { 'bounce-slow': 'bounce 3s infinite' }
         }
       }
     }
@@ -49,7 +48,6 @@
     .rpg-panel::after { content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 2px dashed #5d351e; pointer-events: none; opacity: 0.3; }
     .rpg-btn { background: #ffcc80; border: 2px solid #5d351e; border-bottom-width: 4px; color: #5d351e; text-transform: uppercase; cursor: pointer; position: relative; }
     .rpg-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
-    .pixel-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 50; }
     
     /* 浇水动画 */
     .watering-can:active { transform: rotate(-45deg); transition: transform 0.2s; }
@@ -65,7 +63,7 @@
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
 
-// 🔥 核心修复：ABI 彻底展开，防止报错 🔥
+// ABI (防报错格式)
 const ABI = [
   {
     "inputs": [
@@ -106,7 +104,7 @@ const ethers = window.ethers;
 function shortAddr(a) { return a ? a.slice(0,6)+".."+a.slice(-4) : "Stranger"; }
 function fmtDate(s) { try{const n=Number(s); return n?new Date(n*1000).toLocaleDateString():"-";}catch{return "-";} }
 
-// 徽章逻辑
+// 徽章
 function getBadges(count, hasCapsule) {
   const b = [];
   if(count >= 1) b.push("🌱 Novice");
@@ -116,7 +114,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v10";
+const CACHE_KEY = "chrono_valley_v11";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -137,16 +135,12 @@ function App() {
   const [tab, setTab] = useState("moment");
   const [inputs, setInputs] = useState({ moment: "", capsule: "", date: "" });
   const [showModal, setShowModal] = useState(false);
-  
-  // 新功能状态
   const [weather, setWeather] = useState("Sunny");
   const [isNight, setIsNight] = useState(false);
 
   // 初始化
   useEffect(() => {
     const c = loadCache(); if(c) setLogs(c);
-    
-    // 天气系统 (模拟 API)
     const hour = new Date().getHours();
     const night = hour >= 18 || hour < 6;
     setIsNight(night);
@@ -224,17 +218,12 @@ function App() {
     finally { setLoading(false); }
   }
 
-  // === 新功能: 给日志浇水 (打赏) ===
   async function handleWater(toAddr) {
     if(!signer) return setStatus({type:'error', msg: "Connect Wallet"});
     if(toAddr.toLowerCase() === account.toLowerCase()) return setStatus({type:'error', msg: "Can't water self!"});
-    
     try {
       setLoading(true);
-      const tx = await signer.sendTransaction({
-        to: toAddr,
-        value: ethers.parseEther("0.0001")
-      });
+      const tx = await signer.sendTransaction({ to: toAddr, value: ethers.parseEther("0.0001") });
       setStatus({type:'info', msg: "Watering..."});
       await tx.wait();
       setStatus({type:'success', msg: "Watered! 💧"});
@@ -263,7 +252,6 @@ function App() {
               <div className="font-bold">{shortAddr(account)}</div>
               <div className="flex gap-1 mt-1">
                 {badges.map(b => <span key={b} className="text-xs bg-white px-1 rounded border border-[#5d351e] text-[#5d351e]">{b}</span>)}
-                {badges.length === 0 && <span className="text-xs opacity-50">No Badges</span>}
               </div>
             </div>
           ) : (
@@ -315,10 +303,28 @@ function App() {
               </div>
 
               {tab === 'capsule' && (
-                <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69]">
-                  <div className="relative rpg-btn bg-white py-2 px-4 text-center">
-                    <span className="pointer-events-none text-[#5d351e]">📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "Pick Date"}</span>
-                    <input type="datetime-local" className="pixel-input" value={inputs.date} onChange={(e)=>setInputs({...inputs, date:e.target.value})} />
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69] relative">
+                  <div className="rpg-btn bg-white py-2 px-4 text-center relative w-full">
+                    <span className="pointer-events-none text-[#5d351e]">
+                      📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "Click to Pick Date"}
+                    </span>
+                    
+                    {/* === 手机点击修复核心：Z-Index 9999 + 绝对定位覆盖 === */}
+                    <input 
+                      type="datetime-local" 
+                      value={inputs.date}
+                      onChange={(e)=>setInputs({...inputs, date:e.target.value})}
+                      style={{
+                        position: 'absolute',
+                        top: 0, 
+                        left: 0, 
+                        width: '100%', 
+                        height: '100%', 
+                        opacity: 0, 
+                        zIndex: 9999, 
+                        cursor: 'pointer'
+                      }}
+                    />
                   </div>
                 </div>
               )}
@@ -353,7 +359,6 @@ function App() {
                       ) : log.content}
                     </div>
 
-                    {/* 浇水按钮 (只有非锁定的才能浇水) */}
                     <div className="flex justify-end mt-2 pt-2 border-t border-yellow-200">
                       <button 
                         onClick={()=>handleWater(log.author)}
