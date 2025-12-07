@@ -116,7 +116,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v9";
+const CACHE_KEY = "chrono_valley_v10";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
