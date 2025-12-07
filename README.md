@@ -28,28 +28,23 @@ By combining **Pixel Art aesthetics** with **SocialFi mechanics**, we created a 
 * **Diary Mode**: Instant on-chain logging for daily thoughts.
 * **Time Capsule**: Users can lock their messages until a specific future date using our custom-built date picker.
 
-### 🏅 Reputation System
-* **Dynamic Badges**: The frontend automatically awards badges (e.g., *Novice*, *Pro*, *TimeLord*) based on the user's on-chain activity count.
-
 ---
 
 ## 📸 Screenshots
 
+| **Immersive Main Interface** ☀️ |
+|:---:|
+| ![Main UI](https://github.com/user-attachments/assets/f16368a6-a46f-4131-b74c-1e83018aa0cf) |
 
-
-| Day Mode ☀️ | Night Mode 🌙 |
+| **RPG Login System** 🎒 | **SocialFi & Mobile** 📱 |
 |:---:|:---:|
-https://private-user-images.githubusercontent.com/182119925/523479169-ce87f697-6f25-4858-895f-be432cf4f27b.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjUxMjYwMTEsIm5iZiI6MTc2NTEyNTcxMSwicGF0aCI6Ii8xODIxMTk5MjUvNTIzNDc5MTY5LWNlODdmNjk3LTZmMjUtNDg1OC04OTVmLWJlNDMyY2Y0ZjI3Yi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUxMjA3JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MTIwN1QxNjQxNTFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0xMzI1NWNiODM0NThjOTZmMzg3NmVhMDJmZjU5MTE5NWQwNTUwMDhiYTdmMWU3N2EzYjFhZWMyYzRhN2NjYTMyJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.rkZtYkcGmjliaT9spmNqta_GotBezAZ2_lgTTiTV0HU
-| RPG Login 🎒 | Mobile View 📱 |
-|:---:|:---:|
-https://private-user-images.githubusercontent.com/182119925/523479170-8ca2672f-0b1c-44b8-bbc1-64f8801fc83b.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjUxMjYwMTEsIm5iZiI6MTc2NTEyNTcxMSwicGF0aCI6Ii8xODIxMTk5MjUvNTIzNDc5MTcwLThjYTI2NzJmLTBiMWMtNDRiOC1iYmMxLTY0Zjg4MDFmYzgzYi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUxMjA3JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MTIwN1QxNjQxNTFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1kNjhjNDRjZmJmNWFmYWFhNTA3NWJlZTM3NTVmMDg2N2UyNzVjODc0MDIwYmQ1ZGJmNmFmNjczZjM0NGM5MTRiJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.XcLXcLEsVGqM79-VNZl1kWxKK1QOMSmkFPGrmCqrHCw
-https://private-user-images.githubusercontent.com/182119925/523479171-31e3d204-b591-440a-88ed-0537b684a3cd.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjUxMjYwMTEsIm5iZiI6MTc2NTEyNTcxMSwicGF0aCI6Ii8xODIxMTk5MjUvNTIzNDc5MTcxLTMxZTNkMjA0LWI1OTEtNDQwYS04OGVkLTA1MzdiNjg0YTNjZC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUxMjA3JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MTIwN1QxNjQxNTFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1iMTZjMjgxNGMyMDA0NWY5MTkyOTA1M2Y1ZDkwNTRlMTA5Mzc5YjJiODhkOGRlYTk5OTg2Zjk2MTQ4NGZmNDJlJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.ZSbB01AYrAljidVifjnXLRlOuztnx2XPoBQRS_jCgy0
+| ![Login](https://github.com/user-attachments/assets/32be38bc-f031-46d0-9230-22a1dd9a98ef) | ![Feature](https://github.com/user-attachments/assets/707a687a-d466-47fb-969e-4bac4baa3c85) |
 
 ---
 
 ## 🛠️ Tech Stack & Contract
 
-* **Frontend**: React, Tailwind CSS, Ethers.js, RainbowKit/WalletConnect logic.
+* **Frontend**: React, Tailwind CSS, Ethers.js.
 * **Blockchain**: Arbitrum Sepolia Testnet.
 * **Deployment**: Smart Contract deployed via Thirdweb.
 
@@ -64,11 +59,6 @@ https://private-user-images.githubusercontent.com/182119925/523479171-31e3d204-b
 This project is fully decentralized and hosted on GitHub Pages.
 
 ### [🚀 Click Here to Launch Live Demo](https://claim-btc.github.io/Arbitrum-ChronoLog/)
-
-**Local Development:**
-1. Clone the repo.
-2. Open `index.html` with VS Code Live Server.
-3. Enjoy the pixel vibe!
 
 ---
 
