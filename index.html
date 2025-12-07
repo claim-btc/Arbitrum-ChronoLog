@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - V12 FIXED</title>
+  <title>Chrono Valley - V13 NATIVE</title>
 
   <script>
     window.onerror = function(msg, url, line) {
@@ -39,7 +39,7 @@
       transition: background-color 1s ease;
       font-family: "VT323", monospace;
       color: #3e2723;
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="fill:%235d351e"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2L2 22h20L12 2zm0 4l6 14H6L12 6z"/></svg>') 12 12, auto;
+      cursor: auto; /* 恢复默认鼠标，防止干扰 */
     }
     .bg-day { background-color: #76c442; background-image: repeating-linear-gradient(45deg, #6ab33b 25%, transparent 25%, transparent 75%, #6ab33b 75%, #6ab33b), repeating-linear-gradient(45deg, #6ab33b 25%, #76c442 25%, #76c442 75%, #6ab33b 75%, #6ab33b); background-size: 20px 20px; }
     .bg-night { background-color: #1a1a2e; background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px); background-size: 50px 50px; color: #e0e0e0; }
@@ -50,7 +50,26 @@
     .rpg-btn { background: #ffcc80; border: 2px solid #5d351e; border-bottom-width: 4px; color: #5d351e; text-transform: uppercase; cursor: pointer; position: relative; }
     .rpg-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
     
-    /* 浇水动画 */
+    /* === V13 核心修复：原生输入框样式化 === */
+    /* 不再隐藏，而是直接美化 input */
+    .native-date-input {
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: #fff;
+      border: 2px solid #5d351e;
+      border-radius: 4px;
+      padding: 12px;
+      width: 100%;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: #5d351e;
+      text-align: center;
+      display: block;
+      box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+      /* 关键：强制亮色模式，防止在深色手机上看不见字 */
+      color-scheme: light; 
+    }
+    
     .watering-can:active { transform: rotate(-45deg); transition: transform 0.2s; }
   </style>
 </head>
@@ -98,7 +117,7 @@ const ABI = [
   }
 ];
 
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect } = React;
 const ethers = window.ethers;
 
 // === 工具 ===
@@ -114,7 +133,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v12";
+const CACHE_KEY = "chrono_valley_v13";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -137,9 +156,6 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [weather, setWeather] = useState("Sunny");
   const [isNight, setIsNight] = useState(false);
-  
-  // 日期输入框引用
-  const dateInputRef = useRef(null);
 
   // 初始化
   useEffect(() => {
@@ -234,17 +250,6 @@ function App() {
     finally { setLoading(false); }
   }
 
-  // 暴力触发日期选择器
-  const triggerDatePicker = () => {
-    if (dateInputRef.current) {
-      if (dateInputRef.current.showPicker) {
-        dateInputRef.current.showPicker(); // 现代浏览器 API
-      } else {
-        dateInputRef.current.click(); // 老式触发
-      }
-    }
-  };
-
   const myLogs = logs.filter(l => account && l.author.toLowerCase() === account.toLowerCase());
   const badges = getBadges(myLogs.length, myLogs.some(l => l.unlock > 0));
 
@@ -316,36 +321,16 @@ function App() {
                 ></textarea>
               </div>
 
-              {/* V12 日期选择修复: 暴力触发 + 透明层覆盖 */}
+              {/* V13 日期选择修复: 简单粗暴的原生显示 */}
               {tab === 'capsule' && (
-                <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69] relative">
-                  <div 
-                    onClick={triggerDatePicker} 
-                    className="rpg-btn bg-white py-2 px-4 text-center relative w-full cursor-pointer hover:bg-gray-50"
-                  >
-                    <span className="pointer-events-none text-[#5d351e]">
-                      📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "CLICK HERE TO PICK DATE"}
-                    </span>
-                    
-                    {/* 隐形 Input，层级极高 */}
-                    <input 
-                      ref={dateInputRef}
-                      type="datetime-local" 
-                      value={inputs.date}
-                      onChange={(e)=>setInputs({...inputs, date:e.target.value})}
-                      style={{
-                        position: 'absolute',
-                        top: 0, 
-                        left: 0, 
-                        width: '100%', 
-                        height: '100%', 
-                        opacity: 0.01, /* 0.01 确保浏览器认为它是可见的 */
-                        zIndex: 99999, /* 核弹级层级 */
-                        cursor: 'pointer',
-                        fontSize: '16px' 
-                      }}
-                    />
-                  </div>
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69]">
+                  <label className="block text-sm text-[#5d351e] mb-2 font-bold">UNLOCK DATE:</label>
+                  <input 
+                    type="datetime-local" 
+                    className="native-date-input"
+                    value={inputs.date}
+                    onChange={(e)=>setInputs({...inputs, date:e.target.value})}
+                  />
                 </div>
               )}
 
