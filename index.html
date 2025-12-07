@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - V11</title>
+  <title>Chrono Valley - V12 FIXED</title>
 
   <script>
     window.onerror = function(msg, url, line) {
@@ -64,7 +64,7 @@
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
 
-// ABI (分行写，防报错)
+// ABI
 const ABI = [
   {
     "inputs": [
@@ -98,14 +98,13 @@ const ABI = [
   }
 ];
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const ethers = window.ethers;
 
 // === 工具 ===
 function shortAddr(a) { return a ? a.slice(0,6)+".."+a.slice(-4) : "Stranger"; }
 function fmtDate(s) { try{const n=Number(s); return n?new Date(n*1000).toLocaleDateString():"-";}catch{return "-";} }
 
-// 徽章
 function getBadges(count, hasCapsule) {
   const b = [];
   if(count >= 1) b.push("🌱 Novice");
@@ -115,7 +114,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v11";
+const CACHE_KEY = "chrono_valley_v12";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -138,6 +137,9 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [weather, setWeather] = useState("Sunny");
   const [isNight, setIsNight] = useState(false);
+  
+  // 日期输入框引用
+  const dateInputRef = useRef(null);
 
   // 初始化
   useEffect(() => {
@@ -232,6 +234,17 @@ function App() {
     finally { setLoading(false); }
   }
 
+  // 暴力触发日期选择器
+  const triggerDatePicker = () => {
+    if (dateInputRef.current) {
+      if (dateInputRef.current.showPicker) {
+        dateInputRef.current.showPicker(); // 现代浏览器 API
+      } else {
+        dateInputRef.current.click(); // 老式触发
+      }
+    }
+  };
+
   const myLogs = logs.filter(l => account && l.author.toLowerCase() === account.toLowerCase());
   const badges = getBadges(myLogs.length, myLogs.some(l => l.unlock > 0));
 
@@ -303,15 +316,20 @@ function App() {
                 ></textarea>
               </div>
 
-              {/* 日期选择 (V11 修复版) */}
+              {/* V12 日期选择修复: 暴力触发 + 透明层覆盖 */}
               {tab === 'capsule' && (
                 <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69] relative">
-                  {/* 使用内联样式强制修复层级 */}
-                  <div style={{position: 'relative', background: 'white', border: '2px solid #5d351e', padding: '12px', textAlign: 'center', cursor: 'pointer', overflow: 'hidden'}}>
-                    <span style={{pointerEvents: 'none', color: '#5d351e', fontWeight: 'bold'}}>
+                  <div 
+                    onClick={triggerDatePicker} 
+                    className="rpg-btn bg-white py-2 px-4 text-center relative w-full cursor-pointer hover:bg-gray-50"
+                  >
+                    <span className="pointer-events-none text-[#5d351e]">
                       📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "CLICK HERE TO PICK DATE"}
                     </span>
+                    
+                    {/* 隐形 Input，层级极高 */}
                     <input 
+                      ref={dateInputRef}
                       type="datetime-local" 
                       value={inputs.date}
                       onChange={(e)=>setInputs({...inputs, date:e.target.value})}
@@ -321,10 +339,10 @@ function App() {
                         left: 0, 
                         width: '100%', 
                         height: '100%', 
-                        opacity: 0, 
-                        zIndex: 9999, /* 核弹级层级 */
+                        opacity: 0.01, /* 0.01 确保浏览器认为它是可见的 */
+                        zIndex: 99999, /* 核弹级层级 */
                         cursor: 'pointer',
-                        fontSize: '16px' /* 防止 iOS 缩放 */
+                        fontSize: '16px' 
                       }}
                     />
                   </div>
