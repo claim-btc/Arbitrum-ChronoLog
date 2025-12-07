@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - Stardew Edition</title>
+  <title>Chrono Valley - DELUXE</title>
 
   <script>
     window.onerror = function(msg, url, line) {
-      document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100%;background:#3e2723;color:#ffcc80;padding:20px;z-index:9999;font-family:monospace;border-bottom:4px solid #ffcc80;"><h3>⚠️ RPG SYSTEM ERROR</h3><p>'+msg+'</p><p>Line: '+line+'</p></div>';
+      document.body.innerHTML += '<div style="position:fixed;top:0;left:0;width:100%;background:#3e2723;color:#ffcc80;padding:20px;z-index:9999;font-family:monospace;border-bottom:4px solid #ffcc80;"><h3>⚠️ SYSTEM ERROR</h3><p>'+msg+'</p><p>Line: '+line+'</p></div>';
     };
   </script>
 
@@ -18,22 +18,10 @@
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            'pixel': ['"Press Start 2P"', 'cursive'],
-            'hand': ['"VT323"', 'monospace'],
-          },
-          colors: {
-            wood: {
-              light: '#e69c69',
-              DEFAULT: '#a05b32',
-              dark: '#5d351e',
-              border: '#3e2723'
-            },
-            paper: '#fff8e1',
-            grass: '#76c442',
-            sky: '#81d4fa'
-          },
-          animation: { 'bounce-slow': 'bounce 3s infinite' }
+          fontFamily: { 'pixel': ['"Press Start 2P"', 'cursive'], 'hand': ['"VT323"', 'monospace'] },
+          colors: { wood: { light: '#e69c69', DEFAULT: '#a05b32', dark: '#5d351e', border: '#3e2723' }, paper: '#fff8e1', grass: '#76c442', sky: '#81d4fa', night: '#1a1a2e' },
+          animation: { 'bounce-slow': 'bounce 3s infinite', 'rain': 'rain 0.5s linear infinite' },
+          keyframes: { rain: { '0%': { transform: 'translateY(-10px)' }, '100%': { transform: 'translateY(100vh)' } } }
         }
       }
     }
@@ -46,131 +34,59 @@
   <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 
   <style>
-    /* === 星露谷风格核心样式 === */
+    /* 动态背景 */
     body {
-      background-color: #76c442; /* 草地绿 */
-      background-image: 
-        repeating-linear-gradient(45deg, #6ab33b 25%, transparent 25%, transparent 75%, #6ab33b 75%, #6ab33b),
-        repeating-linear-gradient(45deg, #6ab33b 25%, #76c442 25%, #76c442 75%, #6ab33b 75%, #6ab33b);
-      background-position: 0 0, 10px 10px;
-      background-size: 20px 20px;
+      transition: background-color 1s ease;
       font-family: "VT323", monospace;
       color: #3e2723;
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewport="0 0 24 24" fill="%233e2723"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2L2 22h20L12 2zm0 4l6 14H6L12 6z"/></svg>') 12 12, auto; /* 简单的像素光标 */
+      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="fill:%235d351e"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2L2 22h20L12 2zm0 4l6 14H6L12 6z"/></svg>') 12 12, auto;
     }
-
-    /* 木板弹窗效果 */
-    .rpg-panel {
-      background: #e69c69;
-      border: 4px solid #5d351e;
-      box-shadow: 
-        inset 4px 4px 0 #ffcc80,
-        inset -4px -4px 0 #a05b32,
-        4px 4px 0 rgba(0,0,0,0.3);
-      position: relative;
-    }
-    /* 铆钉装饰 */
-    .rpg-panel::after {
-      content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-      border: 2px dashed #5d351e; pointer-events: none; opacity: 0.3;
-    }
-
-    /* 像素按钮 */
-    .rpg-btn {
-      background: #ffcc80;
-      border: 2px solid #5d351e;
-      border-bottom-width: 4px;
-      color: #5d351e;
-      text-transform: uppercase;
-      transition: transform 0.1s;
-      cursor: pointer;
-      position: relative;
-    }
-    .rpg-btn:active {
-      transform: translateY(2px);
-      border-bottom-width: 2px;
-    }
-    .rpg-btn-primary { background: #81d4fa; } /* 蓝色按钮 */
-    .rpg-btn-action { background: #69f0ae; }  /* 绿色按钮 */
-
-    /* 羊皮纸输入框 */
-    .parchment {
-      background: #fff8e1;
-      border: 2px solid #a1887f;
-      box-shadow: inset 0 0 20px rgba(161, 136, 127, 0.2);
-      color: #3e2723;
-    }
-
-    /* 手机日期修复 (隐形覆盖法) */
-    .pixel-date-wrapper {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
-    .pixel-date-input {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0; z-index: 10; cursor: pointer;
-    }
+    .bg-day { background-color: #76c442; background-image: repeating-linear-gradient(45deg, #6ab33b 25%, transparent 25%, transparent 75%, #6ab33b 75%, #6ab33b), repeating-linear-gradient(45deg, #6ab33b 25%, #76c442 25%, #76c442 75%, #6ab33b 75%, #6ab33b); background-size: 20px 20px; }
+    .bg-night { background-color: #1a1a2e; background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px); background-size: 50px 50px; color: #e0e0e0; }
+    
+    /* 组件样式 */
+    .rpg-panel { background: #e69c69; border: 4px solid #5d351e; box-shadow: inset 4px 4px 0 #ffcc80, inset -4px -4px 0 #a05b32, 4px 4px 0 rgba(0,0,0,0.3); position: relative; }
+    .rpg-panel::after { content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px; border: 2px dashed #5d351e; pointer-events: none; opacity: 0.3; }
+    .rpg-btn { background: #ffcc80; border: 2px solid #5d351e; border-bottom-width: 4px; color: #5d351e; text-transform: uppercase; cursor: pointer; position: relative; }
+    .rpg-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+    .pixel-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; z-index: 50; }
+    
+    /* 浇水动画 */
+    .watering-can:active { transform: rotate(-45deg); transition: transform 0.2s; }
   </style>
 </head>
-<body>
+<body class="bg-day">
 
-  <div id="root" class="min-h-screen p-4 pb-20 max-w-lg mx-auto"></div>
+  <div id="root" class="min-h-screen p-4 pb-20 max-w-lg mx-auto relative z-10"></div>
 
 <script type="text/babel">
 
-// === 1. 区块链配置 ===
+// === 配置 ===
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
-
-// 🔥 核心修复：ABI 展开写，防止报错 🔥
-const ABI = [
-  {
-    "inputs": [
-      { "internalType": "string", "name": "_content", "type": "string" },
-      { "internalType": "uint256", "name": "_unlockTime", "type": "uint256" }
-    ],
-    "name": "createLog",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getAllLogs",
-    "outputs": [
-      {
-        "components": [
-          { "internalType": "uint256", "name": "id", "type": "uint256" },
-          { "internalType": "address", "name": "author", "type": "address" },
-          { "internalType": "string", "name": "content", "type": "string" },
-          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
-          { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
-        ],
-        "internalType": "struct ChronoLog.Log[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
+const ABI = [{inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}];
 
 const { useState, useEffect } = React;
 const ethers = window.ethers;
 
-// === 2. 工具函数 ===
-function shortAddr(a) { return a ? a.slice(0,6)+".."+a.slice(-4) : "Visitor"; }
+// === 工具 ===
+function shortAddr(a) { return a ? a.slice(0,6)+".."+a.slice(-4) : "Stranger"; }
 function fmtDate(s) { try{const n=Number(s); return n?new Date(n*1000).toLocaleDateString():"-";}catch{return "-";} }
-function getLevel(count) { return Math.floor(Math.sqrt(count)) + 1; }
 
-// === 3. 缓存 ===
-const CACHE_KEY = "stardew_logs_v1";
+// 徽章逻辑
+function getBadges(count, hasCapsule) {
+  const b = [];
+  if(count >= 1) b.push("🌱 Novice");
+  if(count >= 5) b.push("🚜 Pro");
+  if(hasCapsule) b.push("⏳ TimeLord");
+  return b;
+}
+
+// 缓存
+const CACHE_KEY = "chrono_valley_v8";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
-// === 4. WalletConnect ===
 async function getWCProvider() {
   const rpc={}; rpc[CHAIN_ID]="https://sepolia-rollup.arbitrum.io/rpc";
   const WCP = window.WalletConnectProvider.default || window.WalletConnectProvider;
@@ -185,25 +101,33 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null);
-  
   const [tab, setTab] = useState("moment");
   const [inputs, setInputs] = useState({ moment: "", capsule: "", date: "" });
-  const [showWalletModal, setShowWalletModal] = useState(false); // 控制多钱包弹窗
+  const [showModal, setShowModal] = useState(false);
+  
+  // 新功能状态
+  const [weather, setWeather] = useState("Sunny");
+  const [isNight, setIsNight] = useState(false);
 
   // 初始化
   useEffect(() => {
     const c = loadCache(); if(c) setLogs(c);
+    
+    // 天气系统 (模拟 API)
+    const hour = new Date().getHours();
+    const night = hour >= 18 || hour < 6;
+    setIsNight(night);
+    document.body.className = night ? "bg-night" : "bg-day";
+    setWeather(night ? "Starry" : "Sunny");
+
     if(!provider) {
-      try {
-        const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"ArbSepolia", chainId:CHAIN_ID});
-        const cInstance = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
-        setContract(cInstance);
-        if(!c) fetchLogs(cInstance);
-      } catch(e) {}
+      const rpc = new ethers.JsonRpcProvider("https://sepolia-rollup.arbitrum.io/rpc", {name:"ArbSepolia", chainId:CHAIN_ID});
+      const cInstance = new ethers.Contract(CONTRACT_ADDRESS, ABI, rpc);
+      setContract(cInstance);
+      if(!c) fetchLogs(cInstance);
     }
   }, [provider]);
 
-  // 自动清除提示
   useEffect(() => { if(status){const t=setTimeout(()=>setStatus(null),4000); return ()=>clearTimeout(t)} }, [status]);
 
   async function fetchLogs(cInstance) {
@@ -218,10 +142,8 @@ function App() {
     } catch(e) { console.error(e); }
   }
 
-  // 统一连接函数
   async function connect(mode) {
-    setShowWalletModal(false); // 关闭弹窗
-    setStatus(null); setLoading(true);
+    setShowModal(false); setStatus(null); setLoading(true);
     try {
       let p, t;
       if(mode === 'injected') {
@@ -239,176 +161,175 @@ function App() {
       setProvider(p); setSigner(s); setAccount(a);
       const c = new ethers.Contract(CONTRACT_ADDRESS, ABI, s);
       setContract(c);
-      setStatus({type:'success', msg: "Welcome Back, Farmer!"});
+      setStatus({type:'success', msg: "Farm Loaded!"});
       fetchLogs(c);
     } catch(e) { setStatus({type:'error', msg: e.message}); } 
     finally { setLoading(false); }
   }
 
   async function handleEtch() {
-    if(!signer) return setStatus({type:'error', msg: "Connect Wallet First"});
+    if(!signer) return setStatus({type:'error', msg: "Connect Wallet"});
     const txt = tab==='moment' ? inputs.moment : inputs.capsule;
-    if(!txt.trim()) return setStatus({type:'error', msg: "Write something!"});
+    if(!txt.trim()) return setStatus({type:'error', msg: "Empty!"});
     
     let unlock = 0;
     if(tab === 'capsule') {
-      if(!inputs.date) return setStatus({type:'error', msg: "Pick a date"});
+      if(!inputs.date) return setStatus({type:'error', msg: "Set Date"});
       unlock = Math.floor(new Date(inputs.date).getTime()/1000);
-      if(unlock <= Date.now()/1000) return setStatus({type:'error', msg: "Must be future date"});
+      if(unlock <= Date.now()/1000) return setStatus({type:'error', msg: "Future only"});
     }
 
     try {
       setLoading(true);
       const tx = await contract.createLog(txt, BigInt(unlock));
-      setStatus({type:'info', msg: "Planting seed..."});
+      setStatus({type:'info', msg: "Planting..."});
       await tx.wait();
-      setStatus({type:'success', msg: "Harvest Ready! (+10 XP)"});
+      setStatus({type:'success', msg: "Harvested!"});
       setInputs({ moment: "", capsule: "", date: "" });
       fetchLogs(contract);
-    } catch(e) { setStatus({type:'error', msg: "Failed: " + (e.reason||e.message)}); } 
+    } catch(e) { setStatus({type:'error', msg: "Fail: " + (e.reason||e.message)}); } 
     finally { setLoading(false); }
   }
 
-  const myCount = logs.filter(l => account && l.author.toLowerCase() === account.toLowerCase()).length;
+  // === 新功能: 给日志浇水 (打赏) ===
+  async function handleWater(toAddr) {
+    if(!signer) return setStatus({type:'error', msg: "Connect Wallet"});
+    if(toAddr.toLowerCase() === account.toLowerCase()) return setStatus({type:'error', msg: "Can't water self!"});
+    
+    try {
+      setLoading(true);
+      // 发送 0.0001 ETH
+      const tx = await signer.sendTransaction({
+        to: toAddr,
+        value: ethers.parseEther("0.0001")
+      });
+      setStatus({type:'info', msg: "Watering..."});
+      await tx.wait();
+      setStatus({type:'success', msg: "Watered! 💧"});
+    } catch(e) { setStatus({type:'error', msg: "Dry tank!"}); }
+    finally { setLoading(false); }
+  }
+
+  const myLogs = logs.filter(l => account && l.author.toLowerCase() === account.toLowerCase());
+  const badges = getBadges(myLogs.length, myLogs.some(l => l.unlock > 0));
 
   return (
-    <div className="font-hand text-xl">
+    <div className={`font-hand text-xl ${isNight ? 'text-gray-200' : 'text-[#3e2723]'}`}>
       
-      {/* 顶部 HUD */}
-      <header className="rpg-panel p-4 mb-6 rounded-lg flex justify-between items-center">
+      {/* HUD */}
+      <header className="rpg-panel p-4 mb-6 rounded-lg flex justify-between items-center bg-[#e69c69]">
         <div>
-          <h1 className="font-pixel text-wood-dark text-lg md:text-2xl drop-shadow-sm">Chrono Valley</h1>
-          <div className="text-sm text-wood-dark opacity-80">Day 1 • Spring</div>
+          <h1 className="font-pixel text-lg md:text-2xl drop-shadow-sm text-[#5d351e]">Chrono Valley</h1>
+          <div className="text-sm opacity-80 flex items-center gap-2">
+            <span>{isNight ? '🌙' : '☀️'} {weather}</span>
+            <span>• Year 1</span>
+          </div>
         </div>
         <div>
           {account ? (
             <div className="flex flex-col items-end">
-              <div className="font-bold text-wood-dark">{shortAddr(account)}</div>
-              <div className="text-sm bg-paper px-2 border-2 border-wood-border rounded text-wood-dark">
-                LVL {getLevel(myCount)}
+              <div className="font-bold">{shortAddr(account)}</div>
+              <div className="flex gap-1 mt-1">
+                {badges.map(b => <span key={b} className="text-xs bg-white px-1 rounded border border-[#5d351e] text-[#5d351e]">{b}</span>)}
+                {badges.length === 0 && <span className="text-xs opacity-50">No Badges</span>}
               </div>
             </div>
           ) : (
-            <button onClick={()=>setShowWalletModal(true)} className="rpg-btn rpg-btn-primary px-4 py-2 font-bold rounded shadow-md animate-bounce-slow">
-              LOAD GAME
-            </button>
+            <button onClick={()=>setShowModal(true)} className="rpg-btn px-4 py-2 font-bold rounded shadow-md animate-bounce-slow">LOAD GAME</button>
           )}
         </div>
       </header>
 
-      {/* 状态提示泡 */}
+      {/* 状态 */}
       {status && (
-        <div className={`mb-6 p-3 border-2 border-wood-border rounded text-center shadow-lg font-bold ${status.type==='error'?'bg-red-200 text-red-800':'bg-green-200 text-green-800'}`}>
+        <div className={`mb-6 p-3 border-2 border-[#3e2723] rounded text-center shadow-lg font-bold ${status.type==='error'?'bg-red-200 text-red-900':'bg-green-200 text-green-900'}`}>
           {status.type==='error'?'❌':'✨'} {status.msg}
         </div>
       )}
 
-      {/* 多钱包选择弹窗 (模拟 RainbowKit) */}
-      {showWalletModal && (
+      {/* 弹窗 */}
+      {showModal && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="rpg-panel p-6 rounded-lg w-full max-w-sm animate-bounce-slow">
-            <h2 className="font-pixel text-center text-wood-dark mb-6 text-sm">SELECT WALLET</h2>
+          <div className="rpg-panel p-6 rounded-lg w-full max-w-sm">
+            <h2 className="font-pixel text-center mb-6 text-sm text-[#5d351e]">SELECT SAVE FILE</h2>
             <div className="space-y-4">
-              <button onClick={()=>connect('injected')} className="w-full rpg-btn bg-white py-3 flex items-center justify-center gap-3 hover:bg-gray-100">
-                <span>🦊</span> MetaMask / OKX
-              </button>
-              <button onClick={()=>connect('wc')} className="w-full rpg-btn bg-white py-3 flex items-center justify-center gap-3 hover:bg-gray-100">
-                <span>📱</span> Mobile (QR Code)
-              </button>
-              <button onClick={()=>setShowWalletModal(false)} className="w-full text-center text-wood-dark underline text-sm mt-2">
-                Cancel
-              </button>
+              <button onClick={()=>connect('injected')} className="w-full rpg-btn bg-white py-3">💻 PC Wallet</button>
+              <button onClick={()=>connect('wc')} className="w-full rpg-btn bg-white py-3">📱 Mobile QR</button>
+              <button onClick={()=>setShowModal(false)} className="w-full text-center underline text-sm mt-2">Cancel</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 主工作台 */}
+      {/* 主界面 */}
       {account && (
         <main>
+          {/* 输入台 */}
           <div className="rpg-panel p-2 mb-8 rounded-lg">
-            <div className="bg-paper border-2 border-wood-border p-4 rounded min-h-[300px]">
-              
-              {/* 标签页 */}
-              <div className="flex gap-2 mb-4 border-b-2 border-wood-light pb-2">
-                <button onClick={()=>setTab('moment')} className={`flex-1 py-1 font-bold ${tab==='moment'?'text-wood-dark border-b-4 border-wood-dark':'text-gray-400'}`}>Daily Log</button>
-                <button onClick={()=>setTab('capsule')} className={`flex-1 py-1 font-bold ${tab==='capsule'?'text-purple-600 border-b-4 border-purple-600':'text-gray-400'}`}>Time Capsule</button>
+            <div className="bg-[#fff8e1] border-2 border-[#a1887f] p-4 rounded min-h-[280px]">
+              <div className="flex gap-2 mb-4 border-b-2 border-[#e69c69] pb-2">
+                <button onClick={()=>setTab('moment')} className={`flex-1 py-1 font-bold ${tab==='moment'?'text-[#5d351e] border-b-4 border-[#5d351e]':'text-gray-400'}`}>Diary</button>
+                <button onClick={()=>setTab('capsule')} className={`flex-1 py-1 font-bold ${tab==='capsule'?'text-purple-600 border-b-4 border-purple-600':'text-gray-400'}`}>Capsule</button>
               </div>
 
-              {/* 输入区域 */}
               <div className="relative">
                 <textarea 
                   value={tab==='moment'?inputs.moment:inputs.capsule}
                   onChange={(e)=>setInputs({...inputs, [tab]:e.target.value})}
-                  className="w-full h-32 bg-transparent outline-none resize-none text-xl leading-relaxed"
-                  placeholder={tab==='moment' ? "Dear Diary, today I..." : "To my future self..."}
+                  className="w-full h-32 bg-transparent outline-none resize-none text-xl leading-relaxed text-[#3e2723]"
+                  placeholder={tab==='moment' ? "Dear Diary..." : "To future me..."}
                   style={{fontFamily: '"VT323", monospace'}}
                 ></textarea>
-                
-                {/* 装饰性羽毛笔 */}
-                <div className="absolute bottom-2 right-2 text-4xl opacity-20 pointer-events-none">✒️</div>
               </div>
 
-              {/* 胶囊时间选择 (修复版) */}
               {tab === 'capsule' && (
-                <div className="mt-4 pt-4 border-t-2 border-dashed border-wood-light">
-                  <div className="pixel-date-wrapper rpg-btn bg-white py-2 px-4 text-center">
-                    <span className="pointer-events-none text-wood-dark">
-                      📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "Pick Unlock Date"}
-                    </span>
-                    {/* 隐形原生控件 */}
-                    <input 
-                      type="datetime-local" 
-                      className="pixel-date-input"
-                      value={inputs.date}
-                      onChange={(e)=>setInputs({...inputs, date:e.target.value})}
-                    />
+                <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69]">
+                  <div className="relative rpg-btn bg-white py-2 px-4 text-center">
+                    <span className="pointer-events-none text-[#5d351e]">📅 {inputs.date ? new Date(inputs.date).toLocaleDateString() : "Pick Date"}</span>
+                    <input type="datetime-local" className="pixel-input" value={inputs.date} onChange={(e)=>setInputs({...inputs, date:e.target.value})} />
                   </div>
                 </div>
               )}
 
-              {/* 提交按钮 */}
               <div className="mt-6">
-                <button 
-                  disabled={loading} 
-                  onClick={handleEtch} 
-                  className={`w-full rpg-btn ${tab==='moment'?'rpg-btn-action':'rpg-btn-primary'} py-3 font-bold rounded shadow text-lg`}
-                >
-                  {loading ? "SAVING..." : (tab==='moment' ? "✍️ WRITE TO CHAIN" : "🔒 BURY CAPSULE")}
+                <button disabled={loading} onClick={handleEtch} className="w-full rpg-btn py-3 font-bold rounded shadow text-lg" style={{backgroundColor: tab==='moment'?'#69f0ae':'#81d4fa'}}>
+                  {loading ? "SAVING..." : (tab==='moment' ? "✍️ WRITE" : "🔒 BURY")}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* 公告板 (列表) */}
+          {/* 公告板 */}
           <div className="rpg-panel p-4 rounded-lg bg-[#fff3e0]">
-            <h2 className="font-pixel text-wood-dark text-xs mb-4 text-center border-b-2 border-wood-dark pb-2">COMMUNITY BOARD</h2>
-            
+            <h2 className="font-pixel text-[#5d351e] text-xs mb-4 text-center border-b-2 border-[#5d351e] pb-2">COMMUNITY BOARD</h2>
             <div className="space-y-4">
-              {logs.length === 0 && <div className="text-center text-gray-500 py-8">No notes on the board yet...</div>}
-              
               {logs.map(log => {
                 const isLocked = log.unlock > Date.now()/1000;
                 return (
-                  <div key={log.id} className="bg-yellow-100 p-3 shadow border border-yellow-200 transform hover:rotate-1 transition duration-300 relative">
-                    {/* 钉子装饰 */}
+                  <div key={log.id} className="bg-yellow-100 p-3 shadow border border-yellow-200 relative group">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-red-800 shadow-sm border border-red-900"></div>
-                    
-                    <div className="flex justify-between items-center mb-2 border-b border-yellow-300 pb-1 text-sm text-wood-dark opacity-70">
-                      <span>#{log.id} by {shortAddr(log.author)}</span>
+                    <div className="flex justify-between items-center mb-2 border-b border-yellow-300 pb-1 text-sm opacity-70 text-[#5d351e]">
+                      <span>#{log.id} • {shortAddr(log.author)}</span>
                       <span>{fmtDate(log.ts)}</span>
                     </div>
-
-                    <div className="py-2 text-lg text-wood-dark">
+                    
+                    <div className="py-2 text-lg text-[#3e2723]">
                       {isLocked ? (
-                        <div className="flex items-center gap-2 text-purple-700 bg-purple-100 p-2 rounded">
-                          <span className="text-2xl">🎁</span>
-                          <div>
-                            <div className="font-bold text-xs">DO NOT OPEN UNTIL</div>
-                            <div className="font-mono">{fmtDate(log.unlock)}</div>
-                          </div>
+                        <div className="bg-purple-100 text-purple-800 p-2 rounded text-center border border-purple-200">
+                          🔒 LOCKED UNTIL {fmtDate(log.unlock)}
                         </div>
                       ) : log.content}
+                    </div>
+
+                    {/* 浇水按钮 (只有非锁定的才能浇水) */}
+                    <div className="flex justify-end mt-2 pt-2 border-t border-yellow-200">
+                      <button 
+                        onClick={()=>handleWater(log.author)}
+                        className="watering-can text-sm bg-blue-100 px-2 py-1 rounded border border-blue-200 hover:bg-blue-200 text-blue-800 flex items-center gap-1"
+                        title="Give 0.0001 ETH"
+                      >
+                        🚿 Water (Tip)
+                      </button>
                     </div>
                   </div>
                 )
@@ -418,8 +339,8 @@ function App() {
         </main>
       )}
 
-      <footer className="mt-12 text-center text-wood-dark opacity-60 text-sm">
-        Built on Arbitrum Sepolia • Stardew Inspired
+      <footer className="mt-12 text-center opacity-60 text-sm pb-8">
+        Built on Arbitrum • Stardew Inspired
       </footer>
     </div>
   );
