@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - V15 FINAL</title>
+  <title>Chrono Valley - V16 FINAL</title>
 
   <script>
     window.onerror = function(msg, url, line) {
@@ -20,8 +20,7 @@
         extend: {
           fontFamily: { 'pixel': ['"Press Start 2P"', 'cursive'], 'hand': ['"VT323"', 'monospace'] },
           colors: { wood: { light: '#e69c69', DEFAULT: '#a05b32', dark: '#5d351e', border: '#3e2723' }, paper: '#fff8e1', grass: '#76c442', sky: '#81d4fa', night: '#1a1a2e' },
-          animation: { 'bounce-slow': 'bounce 3s infinite', 'rain': 'rain 0.5s linear infinite' },
-          keyframes: { rain: { '0%': { transform: 'translateY(-10px)' }, '100%': { transform: 'translateY(100vh)' } } }
+          animation: { 'bounce-slow': 'bounce 3s infinite' }
         }
       }
     }
@@ -39,7 +38,6 @@
       transition: background-color 1s ease;
       font-family: "VT323", monospace;
       color: #3e2723;
-      cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" style="fill:%235d351e"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 2L2 22h20L12 2zm0 4l6 14H6L12 6z"/></svg>') 12 12, auto;
     }
     .bg-day { background-color: #76c442; background-image: repeating-linear-gradient(45deg, #6ab33b 25%, transparent 25%, transparent 75%, #6ab33b 75%, #6ab33b), repeating-linear-gradient(45deg, #6ab33b 25%, #76c442 25%, #76c442 75%, #6ab33b 75%, #6ab33b); background-size: 20px 20px; }
     .bg-night { background-color: #1a1a2e; background-image: radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 3px); background-size: 50px 50px; color: #e0e0e0; }
@@ -50,37 +48,35 @@
     .rpg-btn { background: #ffcc80; border: 2px solid #5d351e; border-bottom-width: 4px; color: #5d351e; text-transform: uppercase; cursor: pointer; position: relative; }
     .rpg-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
     
-    /* === V15 核心修复：强制可见的实体输入框 === */
-    .solid-date-input {
-      display: block;
-      width: 100%;
-      height: 60px; /* 足够高，好点 */
-      padding: 10px;
-      margin-top: 5px;
-      
-      /* 强制样式，防止被覆盖 */
-      background-color: #ffffff !important;
-      color: #000000 !important;
-      opacity: 1 !important;
-      
-      /* 像素风边框 */
-      border: 4px solid #5d351e;
-      border-radius: 0;
-      
-      /* 字体设置 */
-      font-family: 'VT323', monospace;
-      font-size: 20px;
-      text-align: center;
-      
-      /* 强制亮色模式 (解决小米/iOS深色模式下的空白问题) */
-      color-scheme: light;
-      
-      /* 消除默认外观 */
-      -webkit-appearance: none;
-      appearance: none;
+    /* === V16 核心修复：强制可见、强制亮色、强制无样式 === */
+    .super-safe-input {
+        display: block;
+        width: 100%;
+        height: 50px;
+        padding: 5px;
+        margin-top: 5px;
+        
+        /* 强制背景白，字黑，去透明 */
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        opacity: 1 !important;
+        
+        /* 强制边框，保证你能看到点击区域 */
+        border: 2px solid #5d351e !important;
+        border-radius: 4px !important;
+        
+        /* 关键：强制亮色模式，解决“空白”问题 */
+        color-scheme: light !important;
+        
+        /* 使用系统字体，防止像素字体在输入框里乱码 */
+        font-family: sans-serif !important;
+        font-size: 16px !important; /* 防止iOS放大 */
+        
+        /* 清除 iOS 默认圆角和阴影 */
+        -webkit-appearance: none;
+        appearance: none;
+        box-shadow: none;
     }
-    
-    .watering-can:active { transform: rotate(-45deg); transition: transform 0.2s; }
   </style>
 </head>
 <body class="bg-day">
@@ -143,7 +139,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v15";
+const CACHE_KEY = "chrono_valley_v16";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -331,13 +327,13 @@ function App() {
                 ></textarea>
               </div>
 
-              {/* V15 日期修复: 纯原生输入框，无任何覆盖技巧 */}
+              {/* V16 日期修复: 强制亮色、强制可见的白底黑字输入框 */}
               {tab === 'capsule' && (
                 <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69]">
-                  <label className="block font-pixel text-xs text-[#5d351e] mb-2">UNLOCK DATE:</label>
+                  <label className="block font-pixel text-xs text-[#5d351e] mb-2">UNLOCK DATE (CLICK BELOW):</label>
                   <input 
                     type="datetime-local" 
-                    className="solid-date-input" 
+                    className="super-safe-input" 
                     value={inputs.date}
                     onChange={(e)=>setInputs({...inputs, date:e.target.value})}
                   />
