@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Chrono Valley - V14 FINAL</title>
+  <title>Chrono Valley - V15 FINAL</title>
 
   <script>
     window.onerror = function(msg, url, line) {
@@ -50,7 +50,36 @@
     .rpg-btn { background: #ffcc80; border: 2px solid #5d351e; border-bottom-width: 4px; color: #5d351e; text-transform: uppercase; cursor: pointer; position: relative; }
     .rpg-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
     
-    /* 浇水动画 */
+    /* === V15 核心修复：强制可见的实体输入框 === */
+    .solid-date-input {
+      display: block;
+      width: 100%;
+      height: 60px; /* 足够高，好点 */
+      padding: 10px;
+      margin-top: 5px;
+      
+      /* 强制样式，防止被覆盖 */
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      opacity: 1 !important;
+      
+      /* 像素风边框 */
+      border: 4px solid #5d351e;
+      border-radius: 0;
+      
+      /* 字体设置 */
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      text-align: center;
+      
+      /* 强制亮色模式 (解决小米/iOS深色模式下的空白问题) */
+      color-scheme: light;
+      
+      /* 消除默认外观 */
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
     .watering-can:active { transform: rotate(-45deg); transition: transform 0.2s; }
   </style>
 </head>
@@ -114,7 +143,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v14";
+const CACHE_KEY = "chrono_valley_v15";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -302,31 +331,16 @@ function App() {
                 ></textarea>
               </div>
 
-              {/* V14 三明治修复法：显示一个Div，覆盖一个隐形Input */}
+              {/* V15 日期修复: 纯原生输入框，无任何覆盖技巧 */}
               {tab === 'capsule' && (
                 <div className="mt-4 pt-4 border-t-2 border-dashed border-[#e69c69]">
-                  <div style={{position:'relative', width:'100%', height:'50px'}}>
-                    
-                    {/* 1. 视觉层：用户看到的漂亮按钮 */}
-                    <div className="rpg-btn bg-white" style={{
-                      position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',
-                      pointerEvents:'none', /* 关键：让点击穿透到下面的 input */
-                      color: '#5d351e', fontWeight: 'bold'
-                    }}>
-                      {inputs.date ? ("📅 " + new Date(inputs.date).toLocaleString()) : "👇 CLICK HERE TO PICK DATE 👇"}
-                    </div>
-
-                    {/* 2. 触控层：真正的原生 Input，透明覆盖 */}
-                    <input 
-                      type="datetime-local" 
-                      value={inputs.date}
-                      onChange={(e)=>setInputs({...inputs, date:e.target.value})}
-                      style={{
-                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                        opacity: 0, zIndex: 10, cursor: 'pointer', appearance: 'none'
-                      }}
-                    />
-                  </div>
+                  <label className="block font-pixel text-xs text-[#5d351e] mb-2">UNLOCK DATE:</label>
+                  <input 
+                    type="datetime-local" 
+                    className="solid-date-input" 
+                    value={inputs.date}
+                    onChange={(e)=>setInputs({...inputs, date:e.target.value})}
+                  />
                 </div>
               )}
 
