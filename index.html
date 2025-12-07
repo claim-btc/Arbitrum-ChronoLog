@@ -64,7 +64,40 @@
 // === 配置 ===
 const CONTRACT_ADDRESS = "0x1A46b403A29c8cBDA564E1f4B9c6332b8873532f";
 const CHAIN_ID = 421614;
-const ABI = [{inputs:[{internalType:"string",name:"_content",type:"string"},{internalType:"uint256",name:"_unlockTime",type:"uint256"}],name:"createLog",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"getAllLogs",outputs:[{components:[{internalType:"uint256",name:"id",type:"uint256"},{internalType:"address",name:"author",type:"address"},{internalType:"string",name":"content",type:"string"},{internalType:"uint256",name":"timestamp",type:"uint256"},{internalType:"uint256",name":"unlockTime",type:"uint256"}],internalType":"struct ChronoLog.Log[]",name:"",type:"tuple[]"}],stateMutability:"view",type:"function"}];
+
+// 🔥 核心修复：ABI 彻底展开，防止报错 🔥
+const ABI = [
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_content", "type": "string" },
+      { "internalType": "uint256", "name": "_unlockTime", "type": "uint256" }
+    ],
+    "name": "createLog",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAllLogs",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "uint256", "name": "id", "type": "uint256" },
+          { "internalType": "address", "name": "author", "type": "address" },
+          { "internalType": "string", "name": "content", "type": "string" },
+          { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+          { "internalType": "uint256", "name": "unlockTime", "type": "uint256" }
+        ],
+        "internalType": "struct ChronoLog.Log[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 const { useState, useEffect } = React;
 const ethers = window.ethers;
@@ -83,7 +116,7 @@ function getBadges(count, hasCapsule) {
 }
 
 // 缓存
-const CACHE_KEY = "chrono_valley_v8";
+const CACHE_KEY = "chrono_valley_v9";
 function loadCache() { try{const r=localStorage.getItem(CACHE_KEY); return r?JSON.parse(r).data:null;}catch{return null;} }
 function saveCache(d) { try{localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), d:d}))}catch{} }
 
@@ -198,7 +231,6 @@ function App() {
     
     try {
       setLoading(true);
-      // 发送 0.0001 ETH
       const tx = await signer.sendTransaction({
         to: toAddr,
         value: ethers.parseEther("0.0001")
